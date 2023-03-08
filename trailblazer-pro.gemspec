@@ -7,7 +7,6 @@ Gem::Specification.new do |spec|
   spec.email         = ["apotonick@gmail.com"]
 
   spec.summary       = "Integrations for our BPMN editor."
-  # spec.description   = "TODO: Write a longer description or delete this line."
   spec.homepage      = "https://trailblazer.to/2.1/docs/pro.html"
   spec.required_ruby_version = Gem::Requirement.new(">= 2.4.0")
 
@@ -25,5 +24,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Uncomment to register a new dependency of your gem
-  # spec.add_dependency "example-gem", "~> 1.0"
+  spec.add_dependency "trailblazer-activity-dsl-linear", "~> 1.2"
+  spec.add_dependency "representable", "~> 3.1"
+  spec.add_dependency "multi_json"
 end

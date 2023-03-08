@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require_relative "pro/version"
 
 module Trailblazer
@@ -8,3 +6,5 @@ module Trailblazer
     # Your code goes here...
   end
 end
+
+require "trailblazer/pro/generate"

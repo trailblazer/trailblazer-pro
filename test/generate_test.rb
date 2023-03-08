@@ -1,100 +1,30 @@
-# require "test_helper"
-# require "json"
-# require "trailblazer/developer/client"
+require "test_helper"
+require "json"
 
-# class GenerateTest < Minitest::Spec
+class GenerateTest < Minitest::Spec
+  it "works with pro's parsing" do
+    collaboration_json = File.read("../pro-backend/test/concepts/diagram" + "/blog_post.collaboration.json")
 
-#   it "Generate.transform_from_hash generates a well-defined Struct" do
-#     json = File.read("./test/json/sign.json")
+    collaboration = Trailblazer::Pro::Generate::Representer::Collaboration.new(OpenStruct.new).from_json(collaboration_json)
+    lifecycle_lane = collaboration.lanes.find { |lane| lane.name == "article moderation" }
 
-#     structs = Trailblazer::Developer::Generate.transform_from_hash({}, hash: JSON[json])
 
-#     validate = structs.find { |struct| struct.id == "validate!" }
+    # assert_equal lifecycle_lane.type "lane"
+    assert_equal lifecycle_lane.elements.size, 40
 
-#     _(validate.id).must_equal "validate!"
-#     _(validate.parent).must_equal "web.signup"
-#     _(validate.linksTo[0].target).must_equal "GatewayEventbased-jw9gp83r"
-#     _(validate.linksTo[0].message).must_be_nil
-#     _(validate.linksTo[1].target).must_equal "Start.default"
-#     _(validate.linksTo[1].message).must_equal true
-#   end
+    create = lifecycle_lane.elements[1]
+    assert_equal create.id, "Create"
+    assert_equal create.type, "function-task-node"
+    assert_equal create.links.size, 2
+    assert_equal create.links[0].target_id, "throw-Create"
+    assert_equal create.links[0].semantic, "success"
+    assert_equal create.links[1].target_id, "create_invalid!"
+    assert_equal create.links[1].semantic, "failure"
 
-#   it "Generate.call" do
-#     # json = Dev::Client.import(id: 11, email: "apotonick@gmail.com", password: , host: "https://api.trailblazer.to", query: "?labels=save%3Ecleanup%3Efailure")
-#     # File.write("./test/json/validate-save-cleanup.json", json)
-
-#     # {id: "validate\n"} gets chomped on server
-#     json = File.read("./test/json/validate-save-cleanup.json")
-
-#     intermediate = Trailblazer::Developer::Generate.(JSON[json])
-
-#     out = PP.pp(intermediate, "")
-#     _(out).must_equal %{#<struct Trailblazer::Activity::Schema::Intermediate
-#  wiring=
-#   {#<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-#     id=\"Start.default\",
-#     data={:type=>\"Event\"}>=>
-#     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
-#       semantic=:success,
-#       target=\"validate\">],
-#    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-#     id=\"validate\",
-#     data={:type=>\"Task\"}>=>
-#     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
-#       semantic=:success,
-#       target=\"save\">],
-#    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-#     id=\"save\",
-#     data={:type=>\"Task\"}>=>
-#     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
-#       semantic=:success,
-#       target=\"success\">,
-#      #<struct Trailblazer::Activity::Schema::Intermediate::Out
-#       semantic=:failure,
-#       target=\"cleanup\">],
-#    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-#     id=\"success\",
-#     data={:type=>\"EndEventTerminate\"}>=>
-#     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
-#       semantic=:success,
-#       target=nil>],
-#    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-#     id=\"cleanup\",
-#     data={:type=>\"Task\"}>=>
-#     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
-#       semantic=:success,
-#       target=\"failure\">],
-#    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-#     id=\"failure\",
-#     data={:type=>\"EndEventTerminate\"}>=>
-#     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
-#       semantic=:failure,
-#       target=nil>]},
-#  stop_task_ids=[\"success\", \"failure\"],
-#  start_task_ids=[\"Start.default\"]>
-# }
-#   end
-# end
-
-# =begin
-# // this will allow multiple activities in one "view":
-# {
-#   "Expense::Activity::Create": {
-#     // here we can store additional data about the activity etc
-
-#     // this is where the current top-level array goes:
-#     elements: [
-#       {
-#         linksTo: [
-
-#           {
-#             target: "..",
-#             semantic: "success",
-#             label: "this is a link with :new semantic" // :symbol_style is matched as semantic
-#           }
-#         ]
-#       }
-#     ]
-#   }
-# }
-# =end
+    suspend = lifecycle_lane.elements[2]
+    assert_equal suspend.id, "suspend-d15ef8ea-a55f-4eed-a0e8-37f717d21c2f"
+    assert_equal suspend.type, "suspend"
+    assert_equal suspend.links.size, 0
+    assert_equal suspend.data["resumes"], ["catch-Update", "catch-Notify approver"]
+  end
+end

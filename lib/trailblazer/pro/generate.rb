@@ -1,44 +1,45 @@
-gem "representable"
-require "representable/hash"
+require "representable/json"
 require "trailblazer/activity/dsl/linear" # Railway.
+require "ostruct"
 
 module Trailblazer
-  module Developer
-    # Computes an {Intermediate} data structure from a TRB-editor.js file.
+  module Pro
+    # Computes an {Intermediate} data structure from a TRB-editor.json file.
     module Generate
-      module_function
-
-      Element = Struct.new(:id, :type, :linksTo, :data, :label, :parent)
-      Arrow   = Struct.new(:target, :label, :message, :target_lane)
+      Element = Struct.new(:id, :type, :data, :links)
+      Link    = Struct.new(:target_id, :semantic)
 
       module Representer
-        class Activity < Representable::Decorator
-          include Representable::Hash
+        class Collaboration < Representable::Decorator  # Called {structure}.
+          include Representable::JSON
 
-          collection :elements, class: Element do
-            property :id
-            property :type
-            collection :linksTo, class: Arrow, default: ::Declarative::Variables::Append([]) do
-              property :target
-              property :label
-              property :message
-              property :target_lane
+          property :name
+          collection :lanes, class: OpenStruct do
+            property :name
+            collection :elements, class: Element do
+              property :id
+              property :type
+              property :data
+              collection :links, class: Link do
+                property :target_id
+                property :semantic
+              end
             end
-            property :data, default: {}
-
-            property :label
-            property :parent # TODO: remove?
           end
+          collection :messages
         end
-      end
+      end # Representer
+
+      module_function
 
       def call(hash)
-        _, (ctx, _) = Activity::TaskWrap.invoke(Pipeline, [{hash: hash}, {}])
+        _, (ctx, _) = Pipeline.invoke({hash: hash})
+
         ctx[:intermediate]
       end
 
-      def transform_from_hash(ctx, hash:, parser: Representer::Activity, **)
-        ctx[:elements] = parser.new(OpenStruct.new).from_hash(hash).elements
+      def transform_from_hash(ctx, hash:, parser: Representer::Collaboration, **)
+        ctx[:structure] = parser.new(OpenStruct.new).from_json(hash)
       end
 
       def find_start_events(ctx, elements:, **)
@@ -96,4 +97,3 @@ module Trailblazer
     end
   end
 end
-# [Inter::Out(:success, nil)]

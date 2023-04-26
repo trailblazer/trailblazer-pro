@@ -25,6 +25,5 @@ Gem::Specification.new do |spec|
 
   # Uncomment to register a new dependency of your gem
   spec.add_dependency "trailblazer-activity-dsl-linear", "~> 1.2"
-  spec.add_dependency "representable", "~> 3.1"
-  spec.add_dependency "multi_json"
+  spec.add_dependency "jwt"
 end

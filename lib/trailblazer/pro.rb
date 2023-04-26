@@ -1,4 +1,6 @@
 require_relative "pro/version"
+require "trailblazer/activity/dsl/linear"
+require "faraday"
 
 module Trailblazer
   module Pro
@@ -7,4 +9,4 @@ module Trailblazer
   end
 end
 
-require "trailblazer/pro/generate"
+require_relative "pro/trace/signin"

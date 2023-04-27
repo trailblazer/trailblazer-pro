@@ -7,18 +7,25 @@ module Trailblazer::Pro
   module Trace
     class Store < Trailblazer::Activity::Railway
       step :upload
+      step :extract_id
 
       def upload(ctx, firebase_upload_url:, data_to_store:, **)
         host, path = firebase_upload_url
 
-        response = Faraday.new(url: host)
+        ctx[:response] = Faraday.new(url: host)
           .post(
             path,
             data_to_store,
             {'Content-Type'=>'application/json', "Accept": "application/json"}
           )
 
-        response.status == 200
+        ctx[:response].status == 200
+      end
+
+      def extract_id(ctx, response:, **)
+        parsed_response = JSON.parse(response.body)
+
+        ctx[:id] = parsed_response["name"]
       end
     end
   end

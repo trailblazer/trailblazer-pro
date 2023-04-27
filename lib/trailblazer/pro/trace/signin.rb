@@ -2,10 +2,13 @@ module Trailblazer::Pro
   module Trace
     class Signin < Trailblazer::Activity::Railway
       step :request_custom_token
-      pass :extract_custom_token_and_fb_key
+      step :parse_response
+      step :extract_custom_token
+      step :extract_firebase_urls
       step :request_id_token
       step :extract_id_token
       step :decorate_id_token
+      step :compute_firebase_upload_url
 
       def request_custom_token(ctx, http: Faraday, api_key:, **)
         ctx[:response] = http.new(url: "http://localhost:3000")
@@ -20,17 +23,33 @@ module Trailblazer::Pro
         ctx[:response].status == 200
       end
 
-      def extract_custom_token_and_fb_key(ctx, response:, **)
-        data = JSON.parse(response.body)
-
-        ctx[:custom_token]          = data["custom_token"]
-        ctx[:firebase_web_api_key]  = data["firebase_web_api_key"]
+      def parse_response(ctx, response:, **)
+        ctx[:parsed_response] = JSON.parse(response.body)
       end
 
-      def request_id_token(ctx, http: Faraday, firebase_web_api_key:, custom_token:, **)
-        ctx[:response] = http.new(url: "https://identitytoolkit.googleapis.com")
+      def extract_custom_token(ctx, parsed_response:, **)
+        ctx[:custom_token] = parsed_response["custom_token"]
+      end
+
+      def extract_firebase_urls(ctx, parsed_response:, **)
+        ctx[:firebase_signin_url] = parsed_response["firebase_signin_url"]
+        ctx[:firebase_upload_url] = parsed_response["firebase_upload_url"] # needed in {Trace::Store}.
+      end
+
+      def compute_firebase_upload_url(ctx, firebase_upload_url:, id_token:, **)
+        host, path = firebase_upload_url
+
+        path = path.sub(":id_token", id_token)
+
+        ctx[:firebase_upload_url] = [host, path]
+      end
+
+      def request_id_token(ctx, http: Faraday, firebase_signin_url:, custom_token:, **)
+        host, path = firebase_signin_url
+
+        ctx[:response] = http.new(url: host)
           .post(
-            "/v1/accounts:signInWithCustomToken?key=#{firebase_web_api_key}",
+            path,
             {
               token:              custom_token,
               returnSecureToken:  true
@@ -66,8 +85,10 @@ module Trailblazer::Pro
         end
 
         def valid?
+# FIXME
+          puts "id_token expires at #{@expires_at}, that is in #{((@expires_at - DateTime.now) * 24 * 60 * 60).to_i} seconds"
 
-          puts "id_token expires at #{expires_at}, that is in #{((expires_at - DateTime.now) * 24 * 60 * 60).to_i} seconds"
+          DateTime.now < @expires_at
         end
       end
     end # Signin

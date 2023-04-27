@@ -8,14 +8,17 @@ module Trailblazer::Pro
     class Store < Trailblazer::Activity::Railway
       step :upload
 
-      def upload(ctx, url:, path:, **)
-        response = Faraday.new(url: "https://trb-pro-dev-default-rtdb.europe-west1.firebasedatabase.app")
-          .post("/traces/#{firebase_uid}.json?auth=#{id_token}",
-            {
+      def upload(ctx, firebase_upload_url:, data_to_store:, **)
+        host, path = firebase_upload_url
 
-                token: "bla",
-              }.to_json,
-              {'Content-Type'=>'application/json', "Accept": "application/json"})
+        response = Faraday.new(url: host)
+          .post(
+            path,
+            data_to_store.to_json,
+            {'Content-Type'=>'application/json', "Accept": "application/json"}
+          )
+
+        response.status == 200
       end
     end
   end

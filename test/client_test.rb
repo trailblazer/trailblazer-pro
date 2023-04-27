@@ -1,38 +1,26 @@
 require "test_helper"
-
+require "trailblazer/developer"
 
 class ClientTest < Minitest::Spec
   it "what" do
     api_key = "tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604"
 
-    signal, (ctx, _) = Trailblazer::Pro::Trace::Signin.invoke([{api_key: api_key}, {}])
+    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Signin, [{api_key: api_key}, {}])
 
     puts "@@@@@ #{signal.inspect}"
     pp ctx[:model]
 
+    assert_equal signal.to_h[:semantic], :success
 
+    assert ctx[:model].valid?
 
-    # firebase_uid = "8XBiJwOsvte0RuvJJDS08BJ2jOV2"
-    firebase_uid = "qoPcKforvZXmg7sEkzWpShiPi5w2"
+    assert id_token = ctx[:id_token]
+    assert_equal ctx[:firebase_upload_url], [
+      "https://trb-pro-dev-default-rtdb.europe-west1.firebasedatabase.app",
+      "/traces/8KwCOTLeK3QdmgtVNUPwr0ukJJc2.json?auth=#{id_token}"]
 
+    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Store, [{firebase_upload_url: ctx[:firebase_upload_url], data_to_store: {a: 1}}, {}])
 
-# trace
-
-require "faraday"
-    response = Faraday.new(url: "https://trb-pro-dev-default-rtdb.europe-west1.firebasedatabase.app")
-          .post("/traces/#{firebase_uid}.json?auth=#{id_token}",
-            {
-
-                token: "bla",
-              }.to_json,
-              {'Content-Type'=>'application/json', "Accept": "application/json"})
-
-        puts response.inspect
-          # raise unless response.status == 200
-
-
-
-# web api key AIzaSyDnism7mVXtAExubmGQMFw7t_KlMD3nA2M
 
 
 
@@ -56,52 +44,4 @@ require "faraday"
 
 
   end
-
-#   it do
-#     skip "we need to mock the server, first"
-
-#     # puts token = Dev::Client.retrieve_token(email: "apotonick@gmail.com", host: "https://api.trailblazer.to")
-
-#     json = Dev::Client.import(id: 3, email: "apotonick@gmail.com", host: "https://api.trailblazer.to", query: "?labels=validate%3Einvalid!%3E:failure")
-
-#     File.write("sip-#{Time.now}.json", json)
-
-#     duplicate = Dev::Client.duplicate(id: 2, email: "apotonick@gmail.com", host: "https://api.trailblazer.to")
-#     puts "@@@@@ #{duplicate.id.inspect}"
-
-#   end
-
-#   let(:api_key) { ENV["API_KEY"] }
-
-#   it do
-#     skip "we need to mock the server, first"
-
-#     puts token = Dev::Client.retrieve_token(email: "apotonick@gmail.com", api_key: api_key, host: "http://localhost:3000")
-
-#     assert token =~ /\w+/
-
-# # Client.new_diagram (private)
-#     diagram = Dev::Client.new_diagram(token: token, email: "apotonick@gmail.com", host: "http://localhost:3000")
-
-#     assert diagram.id > 0
-#     _(diagram.body).must_equal [] # the JSON is already parsed?
-
-# # Client.import (public)
-#     json = Dev::Client.import(id: diagram.id, email: "apotonick@gmail.com", api_key: api_key, host: "http://localhost:3000")
-
-
-
-#   # Currently, this brings you a *formatted* JSON document and additionally added data, such as labels for connections.
-#     _(json).must_equal %{{
-#   "elements": [
-
-#   ]
-# }}
-
-# # Client.duplicate
-#     duplicate = Dev::Client.duplicate(id: diagram.id, email: "apotonick@gmail.com", api_key: api_key, host: "http://localhost:3000")
-
-#     assert duplicate.id > diagram.id
-#     assert _(duplicate.body).must_equal([]) # FIXME: better test!
-#   end
 end

@@ -1,35 +1,19 @@
 # Trailblazer::Pro
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/trailblazer/pro`. To experiment with that code, run `bin/console` for an interactive prompt.
+A library to communicate with the TRAILBLAZER PRO platform.
 
-TODO: Delete this and the text above, and describe your gem
+* Push local traces to us, and analyze using the online debugger.
+* Export diagrams from the PRO editor to use with the `trailblazer-workflow` gem.
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'trailblazer-pro'
+gem "trailblazer-pro"
 ```
 
-And then execute:
+## Trace
 
-    $ bundle install
-
-Or install it yourself as:
-
-    $ gem install trailblazer-pro
-
-## Usage
-
-TODO: Write usage instructions here
-
-## Development
-
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
-
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
-
-## Contributing
-
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/trailblazer-pro.
+Retrieve you API key from https://pro.trailblazer.to/settings.
+It will be something like `tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604`.

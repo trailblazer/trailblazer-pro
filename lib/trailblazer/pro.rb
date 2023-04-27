@@ -11,3 +11,4 @@ end
 
 require_relative "pro/trace/signin"
 require_relative "pro/trace/store"
+require_relative "pro/debugger"

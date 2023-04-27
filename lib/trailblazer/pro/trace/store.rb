@@ -14,7 +14,7 @@ module Trailblazer::Pro
         response = Faraday.new(url: host)
           .post(
             path,
-            data_to_store.to_json,
+            data_to_store,
             {'Content-Type'=>'application/json', "Accept": "application/json"}
           )
 

@@ -26,7 +26,7 @@ class ClientTest < Minitest::Spec
 
     signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Store, [{firebase_upload_url: ctx[:firebase_upload_url], data_to_store: {a: 1}.to_json}, {}])
 
-    assert ctx[:id] =~ /-NU[\d\w]+/ # DISCUSS: not sure the regex always works?
+    assert ctx[:id] =~ /-N[\d\w]+/ # DISCUSS: not sure the regex always works?
 
 # curl 'https://identitytoolkit.googleapis.com/v1/accounts:update?key=AIzaSyDnism7mVXtAExubmGQMFw7t_KlMD3nA2M' \
 # -H 'Content-Type: application/json' \
@@ -61,7 +61,7 @@ class ClientTest < Minitest::Spec
     )
 
     assert_equal token[0].valid?, true
-    assert_match /^-NU\w+/, trace_id
+    assert_match /^-N\w+/, trace_id
     assert_equal debugger_url, "https://ide.trailblazer.to/#{trace_id}"
   end
 end

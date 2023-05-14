@@ -10,8 +10,8 @@ module Trailblazer::Pro
       step :decorate_id_token
       step :compute_firebase_upload_url
 
-      def request_custom_token(ctx, http: Faraday, api_key:, **)
-        ctx[:response] = http.new(url: "http://localhost:3000")
+      def request_custom_token(ctx, http: Faraday, api_key:, trailblazer_pro_host: "http://localhost:3000", **)
+        ctx[:response] = http.new(url: trailblazer_pro_host)
           .post(
             "/api/v1/signin_with_api_key",
             {

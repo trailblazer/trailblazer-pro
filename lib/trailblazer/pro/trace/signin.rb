@@ -4,21 +4,21 @@ module Trailblazer::Pro
       step :request_custom_token
       step :parse_response
       step :extract_custom_token
-      step :extract_firebase_urls
+      step :extract_data_for_firebase
       step :request_id_token
       step :extract_id_token
       step :decorate_id_token
-      step :compute_firebase_upload_url
+
+      PRO_SIGNIN_PATH = "/api/v1/signin_with_api_key"
 
       def request_custom_token(ctx, http: Faraday, api_key:, trailblazer_pro_host: "http://localhost:3000", **)
-        ctx[:response] = http.new(url: trailblazer_pro_host)
-          .post(
-            "/api/v1/signin_with_api_key",
-            {
-              api_key: api_key,
-            }.to_json,
-            {'Content-Type'=>'application/json', "Accept": "application/json"}
-          )
+        ctx[:response] = http.post(
+          "#{trailblazer_pro_host}#{PRO_SIGNIN_PATH}",
+          {
+            api_key: api_key,
+          }.to_json,
+          {'Content-Type'=>'application/json', "Accept": "application/json"}
+        )
 
         ctx[:response].status == 200
       end
@@ -31,31 +31,21 @@ module Trailblazer::Pro
         ctx[:custom_token] = parsed_response["custom_token"]
       end
 
-      def extract_firebase_urls(ctx, parsed_response:, **)
-        ctx[:firebase_signin_url] = parsed_response["firebase_signin_url"]
-        ctx[:firebase_upload_url] = parsed_response["firebase_upload_url"] # needed in {Trace::Store}.
-      end
-
-      def compute_firebase_upload_url(ctx, firebase_upload_url:, id_token:, **)
-        host, path = firebase_upload_url
-
-        path = path.sub(":id_token", id_token)
-
-        ctx[:firebase_upload_url] = [host, path]
+      def extract_data_for_firebase(ctx, parsed_response:, **)
+        ctx[:firebase_signin_url]   = parsed_response["firebase_signin_url"] or return
+        ctx[:firebase_upload_url]   = parsed_response["firebase_upload_url"] or return # needed in {Trace::Store}.
+        ctx[:firestore_upload_template]  = parsed_response["firebase_upload_data"] or return
       end
 
       def request_id_token(ctx, http: Faraday, firebase_signin_url:, custom_token:, **)
-        host, path = firebase_signin_url
-
-        ctx[:response] = http.new(url: host)
-          .post(
-            path,
-            {
-              token:              custom_token,
-              returnSecureToken:  true
-            }.to_json,
-            {'Content-Type'=>'application/json', "Accept": "application/json"}
-          )
+        ctx[:response] = http.post(
+          firebase_signin_url,
+          {
+            token:              custom_token,
+            returnSecureToken:  true
+          }.to_json,
+          {'Content-Type'=>'application/json', "Accept": "application/json"}
+        )
 
         ctx[:response].status == 200
       end

@@ -1,23 +1,22 @@
-# Store
-# trace.json
-# created_at
-# name
-# pro version
 module Trailblazer::Pro
   module Trace
     class Store < Trailblazer::Activity::Railway
       step :upload
       step :extract_id
+      fail :error
 
-      def upload(ctx, firebase_upload_url:, data_to_store:, **)
-        host, path = firebase_upload_url
+      def upload(ctx, firebase_upload_url:, data_to_store:, id_token:, firestore_fields_template:, **)
+        fields = data_to_store[:fields].merge(firestore_fields_template)
 
-        ctx[:response] = Faraday.new(url: host)
-          .post(
-            path,
-            data_to_store,
-            {'Content-Type'=>'application/json', "Accept": "application/json"}
-          )
+        json_to_store = data_to_store.merge(fields: fields).to_json
+
+        ctx[:response] = Faraday.post(
+          firebase_upload_url,
+          json_to_store,
+          {'Content-Type'=>'application/json', "Accept": "application/json",
+            "Authorization": "Bearer #{id_token}"
+          }
+        )
 
         ctx[:response].status == 200
       end
@@ -25,7 +24,12 @@ module Trailblazer::Pro
       def extract_id(ctx, response:, **)
         parsed_response = JSON.parse(response.body)
 
-        ctx[:id] = parsed_response["name"]
+        ctx[:firestore_name]  = parsed_response["name"]
+        ctx[:id]              = ctx[:firestore_name].split("/").last
+      end
+
+      def error(ctx, response:, **)
+        puts response.inspect
       end
     end
   end

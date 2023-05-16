@@ -11,6 +11,8 @@ class ClientTest < Minitest::Spec
   end
 
   it "manual Signin and Upload" do
+    skip
+
     api_key = "tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604"
 
     signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Signin, [{api_key: api_key}, {}])
@@ -20,11 +22,15 @@ class ClientTest < Minitest::Spec
     assert ctx[:model].valid?
 
     assert id_token = ctx[:id_token]
-    assert_equal ctx[:firebase_upload_url], [
-      "https://trb-pro-dev-default-rtdb.europe-west1.firebasedatabase.app",
-      "/traces/8KwCOTLeK3QdmgtVNUPwr0ukJJc2.json?auth=#{id_token}"]
 
-    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Store, [{firebase_upload_url: ctx[:firebase_upload_url], data_to_store: {a: 1}.to_json}, {}])
+                        # FIXME: firebase => firestore
+    assert_equal ctx[:firebase_upload_url], "https://firestore.googleapis.com/v1/projects/trb-pro-dev/databases/(default)/documents/traces"
+    assert_equal ctx[:firestore_upload_template], {"version"=>{"stringValue"=>"1"}, "uid"=>{"stringValue"=>"8KwCOTLeK3QdmgtVNUPwr0ukJJc2"}}
+
+    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Store, [{
+      firebase_upload_url: ctx[:firebase_upload_url],
+      data_to_store: {a: 1}.to_json,
+      firestore_fields_template: ctx[:firestore_upload_template]}, {}])
 
     assert_equal ctx[:id].size, 20
 

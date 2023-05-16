@@ -7,15 +7,16 @@ module Trailblazer
         trace_data = render_trace_data(debugger_nodes, activity: activity, **options)
 
         trace_envelope = {
-          name:   activity,
-          trace:  trace_data,
-          created_at: {".sv" => "timestamp"}, # https://firebase.google.com/docs/reference/rest/database#section-server-values
+          fields: {
+            activity_name:   {stringValue: activity},
+            trace:  {stringValue: trace_data},
+          }
         }
 
         # FIXME: remove
         File.write("PRO-TRACE-#{Time.now}.json", JSON.pretty_generate(JSON.parse(trace_data)))
 
-        token, stored_trace_id = push(trace_envelope.to_json, activity: activity, **options)
+        token, stored_trace_id = push(trace_envelope, activity: activity, **options)
 
         debugger_url = "https://ide.trailblazer.to/#{stored_trace_id}"
         output       = "[TRB PRO] view trace at #{debugger_url}"
@@ -54,28 +55,35 @@ module Trailblazer
         JSON.dump(flat_tree_json)
       end
 
-      def push(trace_json, activity:, token:, api_key:, **options)
+      def push(trace_data, activity:, token:, api_key:, **options)
         # require "json"
         # html = File.open("/home/nick/projects/ide/public/data.json", "w")
         # html.write(JSON.dump(flat_tree_json))
 
         # Signin first time
-        if token.nil?
+        if token.nil? # FIXME
           signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Signin, [{api_key: api_key, **options}, {}])
 
           raise unless signal.to_h[:semantic] == :success
 
-          id_token            = ctx[:model]
-          firebase_upload_url = ctx[:firebase_upload_url]
+          token                     = ctx[:model]
+          id_token                  = ctx[:id_token]
+          firebase_upload_url       = ctx[:firebase_upload_url]
+          firestore_fields_template = ctx[:firestore_upload_template]
 
-          token = [id_token, firebase_upload_url]
+          # token = [id_token, firebase_upload_url]
         end
 
-        id_token, firebase_upload_url = token
+        # id_token, firebase_upload_url = token
 
-        if id_token.valid?
-          # raise token[1].inspect
-          signal, (ctx, flow_options) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Store, [{firebase_upload_url: token[1], data_to_store: trace_json}, {}])
+        if token.valid?
+          signal, (ctx, flow_options) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Store, [{
+            id_token:                   id_token,
+            firebase_upload_url:        firebase_upload_url,
+            firestore_fields_template:  firestore_fields_template,
+            data_to_store:              trace_data
+          }, {}]
+          )
 
           stored_trace_id = ctx[:id]
         else
@@ -85,86 +93,6 @@ module Trailblazer
         return token, stored_trace_id
       end
 
-      def bla_2BRM
-
-require "cgi"
-
-        tw_html = %{}
-
-        ctx_html = %{}
-
-        tree_html = %{
-<style>
-  table, th, td {
-    border: 1px solid black;
-  }
-</style>
-          <table>}
-
-        flat_tree_json.each do |node|
-          indent_tds = node[:level].times.collect { |i| "<td></td>" }.join("")
-          tree_html << %{<tr>
-#{indent_tds}
-  <td>
-    <a href="##{tw_anchor = node[:path].collect { |segment| CGI::escapeHTML(segment.to_s) }.join("@")}">
-      #{CGI::escapeHTML(node[:label].to_s)}
-    </a>
-  </td>
-</tr>}
-
-
-          # task_node = Introspect.find_path(top_level_activity, node[:path])
-
-          tw_html << %{
-            <a name="#{tw_anchor}" />
-            <h2>
-              #{node[:runtime_path]}
-            </h2>
-            <pre>
-              #{CGI::escapeHTML(node[:rendered_task_wrap])}
-            </pre>
-          }
-
-          ctx_render = %{
-            <table>}
-
-          node[:input_ctx].collect do |k, v|
-            ctx_render << %{<tr><td>#{k}</td><td>#{CGI::escapeHTML(v.to_s)}</td></tr>}
-          end
-
-          ctx_render << %{  </table>
-          }
-
-          out_render = %{
-            <table>}
-
-          [node[:output_ctx]||[]].collect do |k, v|
-            out_render << %{<tr><td>#{k}</td><td>#{CGI::escapeHTML(v.to_s)}</td></tr>}
-          end
-
-          out_render << %{  </table>
-          }
-
-
-
-          tw_html << %{
-            <h3>Ctx/in</h3>
-
-            #{ctx_render}
-
-            <h3>Ctx/out</h3>
-            #{out_render}
-          }
-        end
-
-        tree_html << "</table>"
-
-
-
-
-        html = File.open("/home/nick/projects/trailblazer-pro/pro.html", "w")
-        html.write(tree_html + tw_html )
-      end
-    end
+    end # Debugger
   end
 end

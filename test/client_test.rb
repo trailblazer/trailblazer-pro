@@ -66,7 +66,7 @@ class ClientTest < Minitest::Spec
       present_options: {render_method: Trailblazer::Pro::Debugger, token: nil, api_key: api_key},
     )
 
-    assert_equal token[0].valid?, true
+    assert_equal token.valid?, true
     assert_equal trace_id.size, 20
     assert_equal debugger_url, "https://ide.trailblazer.to/#{trace_id}"
   end

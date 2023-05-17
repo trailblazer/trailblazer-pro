@@ -14,7 +14,7 @@ module Trailblazer
         }
 
         # FIXME: remove
-        File.write("PRO-TRACE-#{Time.now}.json", JSON.pretty_generate(JSON.parse(trace_data)))
+        # File.write("PRO-TRACE-#{Time.now}.json", JSON.pretty_generate(JSON.parse(trace_data)))
 
         token, stored_trace_id = push(trace_envelope, activity: activity, **options)
 

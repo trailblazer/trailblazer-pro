@@ -10,6 +10,7 @@ module Trailblazer
           fields: {
             activity_name:   {stringValue: activity},
             trace:  {stringValue: trace_data},
+            created_at: {timestampValue: DateTime.now}, # we're using local client time currently.
           }
         }
 

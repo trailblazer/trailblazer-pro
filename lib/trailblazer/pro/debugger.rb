@@ -3,6 +3,7 @@ module Trailblazer
     module Debugger
       module_function
 
+      # Called in {Trace::Present.call}.
       def call(debugger_nodes, activity:, **options)
         trace_data = render_trace_data(debugger_nodes, activity: activity, **options)
 
@@ -22,17 +23,15 @@ module Trailblazer
         debugger_url = "https://ide.trailblazer.to/#{stored_trace_id}"
         output       = "[TRB PRO] view trace at #{debugger_url}"
 
-        returned_values = [token, stored_trace_id, debugger_url]
+        returned_values = [token, stored_trace_id, debugger_url, trace_envelope]
 
         return output, returned_values
       end
 
-      def render_trace_data(debugger_nodes, activity:, **)
-        # Developer::Trace::Present.render(debugger_nodes)
+      def render_trace_data(debugger_trace, activity:, **)
         top_level_activity = activity
-        # top_level_activity = debugger_nodes[0].captured_input.task # TODO: pass explicitely.
 
-        flat_tree_json = debugger_nodes.collect do |n|
+        flat_tree_json = debugger_trace.to_a.collect do |n|
           task      = n.task
           node, activity, _ = Developer::Introspect.find_path(top_level_activity, n[:compile_path]) # DISCUSS: we don't need that here.
 
@@ -40,20 +39,26 @@ module Trailblazer
           tw_render = Developer::Render::TaskWrap.render_for(activity, node)
 
 
+          # This rendering code has deep knowledge of Trace/pro/v1 tracing interface.
           {
             level: n.level,
             id: n.runtime_id,
             path: n.compile_path,
             runtime_path: n.runtime_path,
             label: n.label,
-            input_ctx: n.captured_input.data[:ctx_snapshot],
-            output_ctx: n.captured_output.data[:ctx_snapshot],
+            ctx_snapshots:{
+              before: n.snapshot_before.data[:ctx_variable_changeset].collect { |name, hash, has_changed| [name, {version: hash.to_s, has_changed: !!has_changed}] },
+              after: n.snapshot_after.data[:ctx_variable_changeset].collect { |name, hash, has_changed| [name, {version: hash.to_s, has_changed: !!has_changed}] }, # FIXME: of course, this is horrible.
+            },
 
             rendered_task_wrap: tw_render,
           }
         end
 
-        JSON.dump(flat_tree_json)
+        JSON.dump(
+          nodes:              flat_tree_json,
+          variable_versions:  debugger_trace.to_h[:variable_versions].to_h
+        )
       end
 
       def push(trace_data, activity:, token:, api_key:, **options)

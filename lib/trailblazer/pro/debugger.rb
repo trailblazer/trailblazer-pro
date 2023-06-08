@@ -31,24 +31,21 @@ module Trailblazer
       def render_trace_data(debugger_trace, activity:, **)
         top_level_activity = activity
 
-        flat_tree_json = debugger_trace.to_a.collect do |n|
-          task      = n.task
-          node, activity, _ = Developer::Introspect.find_path(top_level_activity, n[:compile_path]) # DISCUSS: we don't need that here.
+        flat_tree_json = debugger_trace.to_a.collect do |debugger_node|
 
-# TODO: do we even need to grab tw by path here?
-          tw_render = Developer::Render::TaskWrap.render_for(activity, node)
-
+          # TODO: do we even need to grab tw by path here?
+          introspect_nodes_node = OpenStruct.new(task: debugger_node.task)
+          tw_render = Developer::Render::TaskWrap.render_for(debugger_node.activity, introspect_nodes_node)
 
           # This rendering code has deep knowledge of Trace/pro/v1 tracing interface.
           {
-            level: n.level,
-            id: n.runtime_id,
-            path: n.compile_path,
-            runtime_path: n.runtime_path,
-            label: n.label,
-            ctx_snapshots:{
-              before: n.snapshot_before.data[:ctx_variable_changeset].collect { |name, hash, has_changed| [name, {version: hash.to_s, has_changed: !!has_changed}] },
-              after: n.snapshot_after.data[:ctx_variable_changeset].collect { |name, hash, has_changed| [name, {version: hash.to_s, has_changed: !!has_changed}] }, # FIXME: of course, this is horrible.
+            id:             debugger_node.id.to_s,
+            runtime_id:     debugger_node.runtime_id,
+            level:          debugger_node.level,
+            label:          debugger_node.label,
+            ctx_snapshots: {
+              before: debugger_node.snapshot_before.data[:ctx_variable_changeset].collect { |name, hash, has_changed| [name, {version: hash.to_s, has_changed: !!has_changed}] },
+              after:  debugger_node.snapshot_after.data[:ctx_variable_changeset].collect { |name, hash, has_changed| [name, {version: hash.to_s, has_changed: !!has_changed}] }, # FIXME: of course, this is horrible.
             },
 
             rendered_task_wrap: tw_render,
@@ -57,7 +54,8 @@ module Trailblazer
 
         JSON.dump(
           nodes:              flat_tree_json,
-          variable_versions:  debugger_trace.to_h[:variable_versions].to_h
+          variable_versions:  debugger_trace.to_h[:variable_versions].to_h,
+          pro_version: Pro::VERSION.to_s,
         )
       end
 

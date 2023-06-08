@@ -27,6 +27,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "trailblazer-activity-dsl-linear", "~> 1.2"
   spec.add_dependency "trailblazer-developer", ">= 0.0.29"
   spec.add_dependency "jwt"
+  spec.add_dependency "faraday"
 
   spec.add_development_dependency "minitest-line"
 end

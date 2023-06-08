@@ -84,27 +84,32 @@ class ClientTest < Minitest::Spec
 
   # Assert trace/nodes
     assert_equal trace_nodes.size, 4
-    assert_equal trace_nodes[0].slice("level", "id", "label"), {"level"=>0, "id"=>nil, "label"=>"ClientTest::Create"}
+    assert_equal trace_nodes[0].slice("level", "runtime_id", "label"), {"level"=>0, "runtime_id"=>nil, "label"=>"ClientTest::Create"}
     assert_equal trace_nodes[0]["ctx_snapshots"], {
       "before"=>[],
       "after" => [["model", {"version"=>model_1_id, "has_changed"=>false}]]}
 
-    assert_equal trace_nodes[1].slice("level", "id", "label"), {"level"=>1, "id"=>"Start.default", "label"=>"Start.default"}
+    assert_equal trace_nodes[1].slice("level", "runtime_id", "label"), {"level"=>1, "runtime_id"=>"Start.default", "label"=>"Start.default"}
     assert_equal trace_nodes[1]["ctx_snapshots"], {
       "before"=>[],
       "after" => []}
 
-    assert_equal trace_nodes[2].slice("level", "id", "label"), {"level"=>1, "id"=>"model", "label"=>"model"}
+    assert_equal trace_nodes[2].slice("level", "runtime_id", "label"), {"level"=>1, "runtime_id"=>"model", "label"=>"model"}
     assert_equal trace_nodes[2]["ctx_snapshots"], {
       "before"=>[],
       "after" => [["model", {"version"=>model_1_id, "has_changed"=>true}]]}
 
-    assert_equal trace_nodes[3].slice("level", "id", "label"), {"level"=>1, "id"=>"End.success", "label"=>"End.success"}
+    assert_equal trace_nodes[3].slice("level", "runtime_id", "label"), {"level"=>1, "runtime_id"=>"End.success", "label"=>"End.success"}
     assert_equal trace_nodes[3]["ctx_snapshots"], {
       "before"=>[["model", {"version"=>model_1_id, "has_changed"=>false}]],
       "after" => [["model", {"version"=>model_1_id, "has_changed"=>false}]]}
 
+    assert_equal [trace_nodes[0]["id"], trace_nodes[1]["id"], trace_nodes[2]["id"], trace_nodes[3]["id"]].uniq.size, 4
+
   # Assert trace/variable_versions
     assert_equal trace_variable_versions, {"model"=>{model_1_id => ctx[:model].to_s}}
+
+  # Assert version
+    assert_equal trace_data["pro_version"], Trailblazer::Pro::VERSION
   end
 end

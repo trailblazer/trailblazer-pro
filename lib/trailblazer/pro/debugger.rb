@@ -4,8 +4,8 @@ module Trailblazer
       module_function
 
       # Called in {Trace::Present.call}.
-      def call(debugger_nodes, activity:, **options)
-        trace_data = render_trace_data(debugger_nodes, activity: activity, **options)
+      def call(debugger_trace:, activity:, **options)
+        trace_data = render_trace_data(debugger_trace, activity: activity, **options)
 
         trace_envelope = {
           fields: {
@@ -29,8 +29,6 @@ module Trailblazer
       end
 
       def render_trace_data(debugger_trace, activity:, **)
-        top_level_activity = activity
-
         flat_tree_json = debugger_trace.to_a.collect do |debugger_node|
 
           # TODO: do we even need to grab tw by path here?
@@ -45,7 +43,10 @@ module Trailblazer
             label:          debugger_node.label,
             ctx_snapshots: {
               before: debugger_node.snapshot_before.data[:ctx_variable_changeset].collect { |name, hash, has_changed| [name, {version: hash.to_s, has_changed: !!has_changed}] },
-              after:  debugger_node.snapshot_after.data[:ctx_variable_changeset].collect { |name, hash, has_changed| [name, {version: hash.to_s, has_changed: !!has_changed}] }, # FIXME: of course, this is horrible.
+              after:  debugger_node.snapshot_after ?
+
+              debugger_node.snapshot_after.data[:ctx_variable_changeset].collect { |name, hash, has_changed| [name, {version: hash.to_s, has_changed: !!has_changed}] } # FIXME: of course, this is horrible.
+              : [],
             },
 
             rendered_task_wrap: tw_render,
@@ -81,7 +82,7 @@ module Trailblazer
         # id_token, firebase_upload_url = token
 
         if token.valid?
-          signal, (ctx, flow_options) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Store, [{
+          _signal, (ctx, _flow_options) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Store, [{
             id_token:                   id_token,
             firebase_upload_url:        firebase_upload_url,
             firestore_fields_template:  firestore_fields_template,

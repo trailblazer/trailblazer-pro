@@ -65,7 +65,7 @@ module Trailblazer::Pro
           @firebase_id_token = firebase_id_token
 
           token, _ = JWT.decode(firebase_id_token, nil, false, algorithm: "RS256")
-          iat = token["iat"]
+          # iat = token["iat"]
           exp = token["exp"]
 
           expires_at = DateTime.strptime(exp.to_s, "%s")

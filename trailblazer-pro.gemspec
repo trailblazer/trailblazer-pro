@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Nick Sutterer"]
   spec.email         = ["apotonick@gmail.com"]
 
-  spec.summary       = "Integrations for our BPMN editor."
+  spec.summary       = "Integration code for TRB PRO."
   spec.homepage      = "https://trailblazer.to/2.1/docs/pro.html"
   spec.required_ruby_version = Gem::Requirement.new(">= 2.4.0")
 
@@ -25,9 +25,10 @@ Gem::Specification.new do |spec|
 
   # Uncomment to register a new dependency of your gem
   spec.add_dependency "trailblazer-activity-dsl-linear", "~> 1.2"
-  spec.add_dependency "trailblazer-developer", ">= 0.0.29"
+  spec.add_dependency "trailblazer-developer", ">= 0.1.0", "< 0.2.0"
   spec.add_dependency "jwt"
   spec.add_dependency "faraday"
 
   spec.add_development_dependency "minitest-line"
+  spec.add_development_dependency "rake"
 end

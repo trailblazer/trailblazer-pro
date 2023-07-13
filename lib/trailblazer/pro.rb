@@ -12,11 +12,12 @@ end
 require_relative "pro/session"
 require_relative "pro/session"
 require_relative "pro/trace/signin"
+require_relative "pro/trace/refresh"
 require_relative "pro/trace/store"
 require_relative "pro/trace/wtf"
 require_relative "pro/debugger"
 
-Trailblazer::Pro::Session.wtf_options = {
+Trailblazer::Pro::Session.wtf_present_options = {
   present_options: {
     render_method: Trailblazer::Pro::Debugger,
     # token: nil,

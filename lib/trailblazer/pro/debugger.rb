@@ -60,7 +60,7 @@ module Trailblazer
         )
       end
 
-      def push(trace_data, activity:, token: nil, session: nil, api_key:, **options)
+      def push(trace_data, activity:, token: nil, session: nil, api_key:, now: DateTime.now, **options)
         # require "json"
         # html = File.open("/home/nick/projects/ide/public/data.json", "w")
         # html.write(JSON.dump(flat_tree_json))
@@ -75,29 +75,50 @@ module Trailblazer
           id_token                  = ctx[:id_token]
           firebase_upload_url       = ctx[:firebase_upload_url]
           firestore_fields_template = ctx[:firestore_upload_template]
-
-          # token = [id_token, firebase_upload_url]
+          firebase_refresh_url      = ctx[:firebase_refresh_url]
+          refresh_token             = ctx[:refresh_token]
 
           # TODO: separate step!
-          session = Session.new(token, id_token, firebase_upload_url, firestore_fields_template)
-
+          session = Session.new(
+            token:                      token,
+            id_token:                   id_token,  # TODO: remove, it's in {token}
+            firebase_upload_url:        firebase_upload_url,
+            firestore_fields_template:  firestore_fields_template,
+            firebase_refresh_url:       firebase_refresh_url,
+            refresh_token:              refresh_token
+          )
         end
 
-        # id_token, firebase_upload_url = token
+        unless session.valid?(now: now) # refresh!
+          session_options = session.to_h
 
-        if session.valid?
-          store_options = session.to_h # {:id_token}, {:firebase_upload_url} etc.
+          signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Refresh, [{**session_options, **options}, {}])
 
-          _signal, (ctx, _flow_options) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Store, [{
-            data_to_store: trace_data,
-            **store_options,
-          }, {}]
+          raise unless signal.to_h[:semantic] == :success
+
+          token                     = ctx[:model]
+          id_token                  = ctx[:id_token]
+          refresh_token             = ctx[:refresh_token]
+
+          # TODO: separate step!
+          session_options = session_options.merge(
+            token: token,
+            id_token: id_token,
+            refresh_token: refresh_token
           )
 
-          stored_trace_id = ctx[:id]
-        else
-          raise "apply refresh__token, not implemented yet"
+          session = Session.new(**session_options)
         end
+
+        store_options = session.to_h # {:id_token}, {:firebase_upload_url} etc.
+
+        _signal, (ctx, _flow_options) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Store, [{
+          data_to_store: trace_data,
+          **store_options,
+        }, {}]
+        )
+
+        stored_trace_id = ctx[:id]
 
         return session, stored_trace_id
       end

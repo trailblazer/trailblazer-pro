@@ -116,11 +116,9 @@ class ClientTest < Minitest::Spec
 
   # test if successive wtf? use global settings and token
   it "{#wtf?} with global session options" do
-    Trailblazer::Pro::Session.wtf_options = {
-      present_options: {
-        render_method: Trailblazer::Pro::Debugger,
-        api_key: "tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604"
-      }
+    Trailblazer::Pro::Session.wtf_present_options = {
+      render_method: Trailblazer::Pro::Debugger,
+      api_key: "tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604"
     }
     Trailblazer::Pro::Session.session = Trailblazer::Pro::Session.new()
 
@@ -128,22 +126,33 @@ class ClientTest < Minitest::Spec
 
     signal, (ctx, _), _, output, (session, trace_id, debugger_url, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}])
 
-    assert_equal session.valid?, true
+    assert_equal session.valid?(now: DateTime.now), true
     assert_equal trace_id.size, 20
     assert_equal debugger_url, "https://ide.trailblazer.to/#{trace_id}"
     assert_equal Trailblazer::Pro::Session.session, session # session got stored globally
 
 
-    # while session is valid, do another call.
+  #@ while session is valid, do another call.
     signal, (ctx, _), _, output, (session_2, trace_id_2, debugger_url_2, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}])
 
-    assert_equal session_2.valid?, true
+    assert_equal session_2.valid?(now: DateTime.now), true
     assert_equal trace_id_2.size, 20
     assert_equal debugger_url_2, "https://ide.trailblazer.to/#{trace_id_2}"
     assert_equal Trailblazer::Pro::Session.session, session # still the same session
     assert trace_id != trace_id_2
 
+  #@ simulate time out, new token required.
+    signal, (ctx, _), _, output, (session_3, trace_id_3, debugger_url_3, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}], present_options: {now: DateTime.now + (60 * 6)})
+
+    assert_equal session_3.valid?(now: DateTime.now), true
+    assert_equal trace_id_3.size, 20
+    assert_equal debugger_url_3, "https://ide.trailblazer.to/#{trace_id_3}"
+    assert_equal Trailblazer::Pro::Session.session, session_3 # new session
+    assert trace_id != trace_id_3
+
+  #@ simulate refreshable token
+
     Trailblazer::Pro::Session.session = nil
-    Trailblazer::Pro::Session.wtf_options = nil
+    Trailblazer::Pro::Session.wtf_present_options = nil
   end
 end

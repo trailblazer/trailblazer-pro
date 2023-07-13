@@ -18,12 +18,12 @@ module Trailblazer
         # FIXME: remove
         # File.write("PRO-TRACE-#{Time.now}.json", JSON.pretty_generate(JSON.parse(trace_data)))
 
-        token, stored_trace_id = push(trace_envelope, activity: activity, **options)
+        session, stored_trace_id = push(trace_envelope, activity: activity, **options)
 
         debugger_url = "https://ide.trailblazer.to/#{stored_trace_id}"
         output       = "[TRB PRO] view trace at #{debugger_url}"
 
-        returned_values = [token, stored_trace_id, debugger_url, trace_envelope]
+        returned_values = [session, stored_trace_id, debugger_url, trace_envelope]
 
         return output, returned_values
       end
@@ -60,13 +60,13 @@ module Trailblazer
         )
       end
 
-      def push(trace_data, activity:, token:, api_key:, **options)
+      def push(trace_data, activity:, token: nil, session: nil, api_key:, **options)
         # require "json"
         # html = File.open("/home/nick/projects/ide/public/data.json", "w")
         # html.write(JSON.dump(flat_tree_json))
 
         # Signin first time
-        if token.nil? # FIXME
+        if session.not_signed_in? # FIXME
           signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Signin, [{api_key: api_key, **options}, {}])
 
           raise unless signal.to_h[:semantic] == :success
@@ -77,16 +77,20 @@ module Trailblazer
           firestore_fields_template = ctx[:firestore_upload_template]
 
           # token = [id_token, firebase_upload_url]
+
+          # TODO: separate step!
+          session = Session.new(token, id_token, firebase_upload_url, firestore_fields_template)
+
         end
 
         # id_token, firebase_upload_url = token
 
-        if token.valid?
+        if session.valid?
+          store_options = session.to_h # {:id_token}, {:firebase_upload_url} etc.
+
           _signal, (ctx, _flow_options) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Store, [{
-            id_token:                   id_token,
-            firebase_upload_url:        firebase_upload_url,
-            firestore_fields_template:  firestore_fields_template,
-            data_to_store:              trace_data
+            data_to_store: trace_data,
+            **store_options,
           }, {}]
           )
 
@@ -95,7 +99,7 @@ module Trailblazer
           raise "apply refresh__token, not implemented yet"
         end
 
-        return token, stored_trace_id
+        return session, stored_trace_id
       end
 
     end # Debugger

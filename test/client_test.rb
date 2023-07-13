@@ -55,7 +55,8 @@ class ClientTest < Minitest::Spec
 
   end
 
-  it "wtf?" do
+  # test if trace has expected elements
+  it "{#wtf?} with manual options" do
     api_key = "tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604"
 
     ctx = {}
@@ -111,5 +112,38 @@ class ClientTest < Minitest::Spec
 
   # Assert version
     assert_equal trace_data["pro_version"], Trailblazer::Pro::VERSION
+  end
+
+  # test if successive wtf? use global settings and token
+  it "{#wtf?} with global session options" do
+    Trailblazer::Pro::Session.wtf_options = {
+      present_options: {
+        render_method: Trailblazer::Pro::Debugger,
+        api_key: "tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604"
+      }
+    }
+    Trailblazer::Pro::Session.session = Trailblazer::Pro::Session.new()
+
+    ctx = {}
+
+    signal, (ctx, _), _, output, (session, trace_id, debugger_url, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}])
+
+    assert_equal session.valid?, true
+    assert_equal trace_id.size, 20
+    assert_equal debugger_url, "https://ide.trailblazer.to/#{trace_id}"
+    assert_equal Trailblazer::Pro::Session.session, session # session got stored globally
+
+
+    # while session is valid, do another call.
+    signal, (ctx, _), _, output, (session_2, trace_id_2, debugger_url_2, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}])
+
+    assert_equal session_2.valid?, true
+    assert_equal trace_id_2.size, 20
+    assert_equal debugger_url_2, "https://ide.trailblazer.to/#{trace_id_2}"
+    assert_equal Trailblazer::Pro::Session.session, session # still the same session
+    assert trace_id != trace_id_2
+
+    Trailblazer::Pro::Session.session = nil
+    Trailblazer::Pro::Session.wtf_options = nil
   end
 end

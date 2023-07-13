@@ -9,6 +9,17 @@ module Trailblazer
   end
 end
 
+require_relative "pro/session"
+require_relative "pro/session"
 require_relative "pro/trace/signin"
 require_relative "pro/trace/store"
+require_relative "pro/trace/wtf"
 require_relative "pro/debugger"
+
+Trailblazer::Pro::Session.wtf_options = {
+  present_options: {
+    render_method: Trailblazer::Pro::Debugger,
+    # token: nil,
+    # api_key: api_key
+  }
+}

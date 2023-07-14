@@ -4,6 +4,7 @@ module Trailblazer::Pro
     module Wtf
       def self.call(*args, present_options: {}, **options)
         session = Session.session
+
         present_options = Session.wtf_present_options
           .merge(present_options)
           .merge(session.to_h)

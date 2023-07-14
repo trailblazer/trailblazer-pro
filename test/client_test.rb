@@ -116,11 +116,7 @@ class ClientTest < Minitest::Spec
 
   # test if successive wtf? use global settings and token
   it "{#wtf?} with global session options" do
-    Trailblazer::Pro::Session.wtf_present_options = {
-      render_method: Trailblazer::Pro::Debugger,
-      api_key: "tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604"
-    }
-    Trailblazer::Pro::Session.session = Trailblazer::Pro::Session.new()
+    Trailblazer::Pro.initialize!(api_key: "tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604")
 
     ctx = {}
 

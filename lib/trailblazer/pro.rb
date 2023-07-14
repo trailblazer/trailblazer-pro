@@ -16,11 +16,3 @@ require_relative "pro/trace/refresh"
 require_relative "pro/trace/store"
 require_relative "pro/trace/wtf"
 require_relative "pro/debugger"
-
-Trailblazer::Pro::Session.wtf_present_options = {
-  present_options: {
-    render_method: Trailblazer::Pro::Debugger,
-    # token: nil,
-    # api_key: api_key
-  }
-}

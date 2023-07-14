@@ -60,14 +60,10 @@ module Trailblazer
         )
       end
 
-      def push(trace_data, activity:, token: nil, session: nil, api_key:, now: DateTime.now, **options)
-        # require "json"
-        # html = File.open("/home/nick/projects/ide/public/data.json", "w")
-        # html.write(JSON.dump(flat_tree_json))
-
+      def push(trace_data, activity:, session:, now: DateTime.now, **options)
         # Signin first time
         if session.not_signed_in? # FIXME
-          signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Signin, [{api_key: api_key, **options}, {}])
+          signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Signin, [{**options}, {}])
 
           raise unless signal.to_h[:semantic] == :success
 

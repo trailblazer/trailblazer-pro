@@ -21,5 +21,18 @@ module Trailblazer
         token.nil?
       end
     end
+
+    # TODO:
+    #   pass session, e.g. from RAils/tmp
+    #   different PRO hosts
+    def self.initialize!(api_key:, **options)
+      Session.wtf_present_options = {
+        render_method:  Trailblazer::Pro::Debugger,
+        api_key:        api_key,
+        **options
+      }
+
+      Session.session = Trailblazer::Pro::Session.new()
+    end
   end
 end

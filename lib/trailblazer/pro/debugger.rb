@@ -62,21 +62,11 @@ module Trailblazer
 
       class Push < Trailblazer::Activity::Railway
         def self.rebuild_session(ctx, session:, **)
-          token                     = ctx[:token]
-          id_token                  = ctx[:id_token]
-          firebase_upload_url       = ctx[:firebase_upload_url]
-          firestore_fields_template = ctx[:firestore_upload_template]
-          firebase_refresh_url      = ctx[:firebase_refresh_url]
-          refresh_token             = ctx[:refresh_token]
+          session_params = ctx.to_h.slice(*Trace::Signin::SESSION_VARIABLE_NAMES)
 
           session = Session.new(
-            **session.to_h,
-            token:                      token,
-            id_token:                   id_token,  # TODO: remove, it's in {token}
-            firebase_upload_url:        firebase_upload_url,
-            firestore_fields_template:  firestore_fields_template,
-            firebase_refresh_url:       firebase_refresh_url,
-            refresh_token:              refresh_token,
+            **session.to_h,  # old data
+            **session_params, # new input
           )
 
           ctx[:session] = session
@@ -97,7 +87,7 @@ module Trailblazer
           In() => [:data_to_store]
 
         def session_initialized?(ctx, session:, **)
-          ! session.is_a?(Session::Uninitialized)
+          session.is_a?(Session)
         end
 
         def valid?(ctx, session:, now:, **)
@@ -106,68 +96,10 @@ module Trailblazer
       end
 
       def push(trace_data, activity:, session:, now: DateTime.now, **options)
-
         signal, (ctx, _) = Trailblazer::Developer.wtf?(Push, [{session: session, now: now, data_to_store: trace_data, **options}, {}])
 
-
-        # # Signin first time
-        # if session.is_a?(Session::Uninitialized)
-        #   signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Signin, [{**options}, {}])
-
-        #   raise unless signal.to_h[:semantic] == :success
-
-        #   token                     = ctx[:model]
-        #   id_token                  = ctx[:id_token]
-        #   firebase_upload_url       = ctx[:firebase_upload_url]
-        #   firestore_fields_template = ctx[:firestore_upload_template]
-        #   firebase_refresh_url      = ctx[:firebase_refresh_url]
-        #   refresh_token             = ctx[:refresh_token]
-
-        #   # TODO: separate step!
-        #   session = Session.new(
-        #     **session.to_h,
-        #     token:                      token,
-        #     id_token:                   id_token,  # TODO: remove, it's in {token}
-        #     firebase_upload_url:        firebase_upload_url,
-        #     firestore_fields_template:  firestore_fields_template,
-        #     firebase_refresh_url:       firebase_refresh_url,
-        #     refresh_token:              refresh_token,
-        #   )
-        # end
-
-        # unless session.valid?(now: now) # refresh!
-        #   refresh_options = session.to_h
-
-        #   signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Refresh, [{**refresh_options, **options}, {}])
-
-        #   raise unless signal.to_h[:semantic] == :success
-
-        #   token                     = ctx[:model]
-        #   id_token                  = ctx[:id_token]
-        #   refresh_token             = ctx[:refresh_token]
-
-        #   # TODO: separate step!
-        #   session_options = refresh_options.merge(
-        #     token: token,
-        #     id_token: id_token,
-        #     refresh_token: refresh_token
-        #   )
-
-        #   session = Session.new(**session_options)
-        # end
-
-        # store_options = session.to_h # {:id_token}, {:firebase_upload_url} etc.
-
-        # _signal, (ctx, _flow_options) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Store, [{
-        #   data_to_store: trace_data,
-        #   **store_options,
-        # }, {}]
-        # )
-
-        # raise ctx.keys.inspect
-
+        session         = ctx[:session]
         stored_trace_id = ctx[:id]
-        session = ctx[:session]
 
         return session, stored_trace_id
       end

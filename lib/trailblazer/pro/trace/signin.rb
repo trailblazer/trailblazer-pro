@@ -21,6 +21,12 @@ module Trailblazer::Pro
 
       PRO_SIGNIN_PATH = "/api/v1/signin_with_api_key"
 
+      # DISCUSS: this is the "outgoing" contract, the variables we should store in {session_params}.
+      SESSION_VARIABLE_NAMES = [
+        #:custom_token,
+        :id_token, :refresh_token, :token, :firebase_signin_url, :firebase_refresh_url, :firebase_upload_url, :firestore_fields_template
+      ]
+
       def request_custom_token(ctx, http: Faraday, api_key:, trailblazer_pro_host: "https://pro.trailblazer.to", **) # DISCUSS: do we like the defaulting?
         ctx[:response] = http.post(
           "#{trailblazer_pro_host}#{PRO_SIGNIN_PATH}",
@@ -41,7 +47,7 @@ module Trailblazer::Pro
         ctx[:firebase_signin_url]   = parsed_response["firebase_signin_url"] or return
         ctx[:firebase_refresh_url]  = parsed_response["firebase_refresh_url"] or return
         ctx[:firebase_upload_url]   = parsed_response["firebase_upload_url"] or return # needed in {Trace::Store}.
-        ctx[:firestore_upload_template]  = parsed_response["firebase_upload_data"] or return
+        ctx[:firestore_fields_template]  = parsed_response["firebase_upload_data"] or return
       end
 
       def request_id_token(ctx, http: Faraday, firebase_signin_url:, custom_token:, **)

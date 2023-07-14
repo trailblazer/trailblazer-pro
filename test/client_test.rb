@@ -168,7 +168,7 @@ class ClientTest < Minitest::Spec
     assert_equal Trailblazer::Pro::Session.session, session_3 # new session
 
     session_3_hash = assert_session(session_3, **session_static_options)
-    #@ id_token and refresh_token have changed!
+    #@ {id_token} has changed, {refresh_token} stays the same!
     refute_equal session_3_hash[:id_token],       session_2_hash[:id_token]
     assert_equal session_3_hash[:refresh_token],  session_2_hash[:refresh_token]
 

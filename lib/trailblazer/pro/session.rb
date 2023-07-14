@@ -8,7 +8,7 @@ module Trailblazer
       singleton_class.attr_accessor :session
 
       class Uninitialized < Struct.new(:api_key, :trailblazer_pro_host, keyword_init: true)
-        def valid?
+        def valid?(**)
           false
         end
       end
@@ -20,7 +20,6 @@ module Trailblazer
 
     # TODO:
     #   pass session, e.g. from RAils/tmp
-    #   different PRO hosts
     def self.initialize!(api_key:, **options)
       Session.wtf_present_options = {
         render_method:  Trailblazer::Pro::Debugger,

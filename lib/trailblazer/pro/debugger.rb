@@ -60,25 +60,15 @@ module Trailblazer
         )
       end
 
-      def push(trace_data, activity:, session:, now: DateTime.now, **options)
-        # Signin first time
-        if session.is_a?(Session::Uninitialized)
-          signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Signin, [{**options}, {}])
-
-          raise unless signal.to_h[:semantic] == :success
-
-          token                     = ctx[:model]
+      class Push < Trailblazer::Activity::Railway
+        def self.rebuild_session(ctx, session:, **)
+          token                     = ctx[:token]
           id_token                  = ctx[:id_token]
           firebase_upload_url       = ctx[:firebase_upload_url]
           firestore_fields_template = ctx[:firestore_upload_template]
           firebase_refresh_url      = ctx[:firebase_refresh_url]
           refresh_token             = ctx[:refresh_token]
 
-          # token, _ = JWT.decode(firebase_id_token, nil, false, algorithm: "RS256")
-          # exp = token["exp"]
-          # expires_at = DateTime.strptime(exp.to_s, "%s")
-
-          # TODO: separate step!
           session = Session.new(
             **session.to_h,
             token:                      token,
@@ -88,38 +78,96 @@ module Trailblazer
             firebase_refresh_url:       firebase_refresh_url,
             refresh_token:              refresh_token,
           )
+
+          ctx[:session] = session
         end
 
-        unless session.valid?(now: now) # refresh!
-          refresh_options = session.to_h
+        step :session_initialized?,
+          Output(:failure) => Path(track_color: :signin, connect_to: Track(:success)) do # FIXME: move to after {valid?}
+            step Subprocess(Trailblazer::Pro::Trace::Signin)
+            step Push.method(:rebuild_session)
+          end
+        step :valid?,
+          Output(:failure) => Path(track_color: :refresh, connect_to: Track(:success)) do
+            step Subprocess(Trailblazer::Pro::Trace::Refresh)
+            step Push.method(:rebuild_session)
+          end
+        step Subprocess(Trailblazer::Pro::Trace::Store),
+          In() => ->(ctx, session:, **) { session.to_h },
+          In() => [:data_to_store]
 
-          signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Refresh, [{**refresh_options, **options}, {}])
-
-          raise unless signal.to_h[:semantic] == :success
-
-          token                     = ctx[:model]
-          id_token                  = ctx[:id_token]
-          refresh_token             = ctx[:refresh_token]
-
-          # TODO: separate step!
-          session_options = refresh_options.merge(
-            token: token,
-            id_token: id_token,
-            refresh_token: refresh_token
-          )
-
-          session = Session.new(**session_options)
+        def session_initialized?(ctx, session:, **)
+          ! session.is_a?(Session::Uninitialized)
         end
 
-        store_options = session.to_h # {:id_token}, {:firebase_upload_url} etc.
+        def valid?(ctx, session:, now:, **)
+          session.valid?(now: now)
+        end
+      end
 
-        _signal, (ctx, _flow_options) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Store, [{
-          data_to_store: trace_data,
-          **store_options,
-        }, {}]
-        )
+      def push(trace_data, activity:, session:, now: DateTime.now, **options)
+
+        signal, (ctx, _) = Trailblazer::Developer.wtf?(Push, [{session: session, now: now, data_to_store: trace_data, **options}, {}])
+
+
+        # # Signin first time
+        # if session.is_a?(Session::Uninitialized)
+        #   signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Signin, [{**options}, {}])
+
+        #   raise unless signal.to_h[:semantic] == :success
+
+        #   token                     = ctx[:model]
+        #   id_token                  = ctx[:id_token]
+        #   firebase_upload_url       = ctx[:firebase_upload_url]
+        #   firestore_fields_template = ctx[:firestore_upload_template]
+        #   firebase_refresh_url      = ctx[:firebase_refresh_url]
+        #   refresh_token             = ctx[:refresh_token]
+
+        #   # TODO: separate step!
+        #   session = Session.new(
+        #     **session.to_h,
+        #     token:                      token,
+        #     id_token:                   id_token,  # TODO: remove, it's in {token}
+        #     firebase_upload_url:        firebase_upload_url,
+        #     firestore_fields_template:  firestore_fields_template,
+        #     firebase_refresh_url:       firebase_refresh_url,
+        #     refresh_token:              refresh_token,
+        #   )
+        # end
+
+        # unless session.valid?(now: now) # refresh!
+        #   refresh_options = session.to_h
+
+        #   signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Refresh, [{**refresh_options, **options}, {}])
+
+        #   raise unless signal.to_h[:semantic] == :success
+
+        #   token                     = ctx[:model]
+        #   id_token                  = ctx[:id_token]
+        #   refresh_token             = ctx[:refresh_token]
+
+        #   # TODO: separate step!
+        #   session_options = refresh_options.merge(
+        #     token: token,
+        #     id_token: id_token,
+        #     refresh_token: refresh_token
+        #   )
+
+        #   session = Session.new(**session_options)
+        # end
+
+        # store_options = session.to_h # {:id_token}, {:firebase_upload_url} etc.
+
+        # _signal, (ctx, _flow_options) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Store, [{
+        #   data_to_store: trace_data,
+        #   **store_options,
+        # }, {}]
+        # )
+
+        # raise ctx.keys.inspect
 
         stored_trace_id = ctx[:id]
+        session = ctx[:session]
 
         return session, stored_trace_id
       end

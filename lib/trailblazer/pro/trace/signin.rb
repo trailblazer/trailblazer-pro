@@ -6,7 +6,7 @@ module Trailblazer::Pro
 
     class Signin < Trailblazer::Activity::Railway
       def self.decorate_id_token(ctx, id_token:, **)
-        ctx[:model] = IdToken.new(id_token)
+        ctx[:token] = IdToken.new(id_token)
       end
 
       step :request_custom_token

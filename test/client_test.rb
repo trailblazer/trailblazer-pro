@@ -116,7 +116,12 @@ class ClientTest < Minitest::Spec
 
   # test if successive wtf? use global settings and token
   it "{#wtf?} with global session options" do
-    Trailblazer::Pro.initialize!(api_key: "tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604")
+    Trailblazer::Pro.initialize!(
+      api_key:              api_key = "tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604",
+      trailblazer_pro_host: trailblazer_pro_host = "http://localhost:3000",
+    )
+
+    assert_equal Trailblazer::Pro::Session.session.to_h, {api_key: api_key, trailblazer_pro_host: trailblazer_pro_host}
 
     ctx = {}
 

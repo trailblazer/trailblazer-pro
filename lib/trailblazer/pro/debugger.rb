@@ -62,7 +62,7 @@ module Trailblazer
 
       def push(trace_data, activity:, session:, now: DateTime.now, **options)
         # Signin first time
-        if session.not_signed_in? # FIXME
+        if session.is_a?(Session::Uninitialized)
           signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Signin, [{**options}, {}])
 
           raise unless signal.to_h[:semantic] == :success
@@ -86,9 +86,9 @@ module Trailblazer
         end
 
         unless session.valid?(now: now) # refresh!
-          session_options = session.to_h
+          refresh_options = session.to_h
 
-          signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Refresh, [{**session_options, **options}, {}])
+          signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Trace::Refresh, [{**refresh_options, **options}, {}])
 
           raise unless signal.to_h[:semantic] == :success
 
@@ -97,7 +97,7 @@ module Trailblazer
           refresh_token             = ctx[:refresh_token]
 
           # TODO: separate step!
-          session_options = session_options.merge(
+          session_options = refresh_options.merge(
             token: token,
             id_token: id_token,
             refresh_token: refresh_token

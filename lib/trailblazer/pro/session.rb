@@ -3,18 +3,11 @@ module Trailblazer
     # DISCUSS: do we want {id_token} here explicitely?
     # Data structure to hold all data values necessary to keep an authenticated
     # session with Firebase.
-    class Session < Struct.new(:token, :id_token, :firebase_upload_url, :firestore_fields_template, :firebase_refresh_url, :firebase_signin_url, :refresh_token, :api_key, :trailblazer_pro_host, keyword_init: true)
+    class Session < Struct.new(:expires_at, :jwt_token_exp, :id_token, :firebase_upload_url, :firestore_fields_template, :firebase_refresh_url, :firebase_signin_url, :refresh_token, :api_key, :trailblazer_pro_host, keyword_init: true)
       singleton_class.attr_accessor :wtf_present_options
       singleton_class.attr_accessor :session
 
       class Uninitialized < Struct.new(:api_key, :trailblazer_pro_host, keyword_init: true)
-        def valid?(**)
-          false
-        end
-      end
-
-      def valid?(**options)
-        token.valid?(**options)
       end
     end
 

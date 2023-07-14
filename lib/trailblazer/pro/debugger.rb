@@ -15,9 +15,6 @@ module Trailblazer
           }
         }
 
-        # FIXME: remove
-        # File.write("PRO-TRACE-#{Time.now}.json", JSON.pretty_generate(JSON.parse(trace_data)))
-
         session, stored_trace_id = push(trace_envelope, activity: activity, **options)
 
         debugger_url = "https://ide.trailblazer.to/#{stored_trace_id}"
@@ -77,7 +74,7 @@ module Trailblazer
             step Subprocess(Trailblazer::Pro::Trace::Signin)
             step Push.method(:rebuild_session)
           end
-        step :valid?,
+        step Trace.method(:valid?),
           Output(:failure) => Path(track_color: :refresh, connect_to: Track(:success)) do
             step Subprocess(Trailblazer::Pro::Trace::Refresh)
             step Push.method(:rebuild_session)
@@ -88,10 +85,6 @@ module Trailblazer
 
         def session_initialized?(ctx, session:, **)
           session.is_a?(Session)
-        end
-
-        def valid?(ctx, session:, now:, **)
-          session.valid?(now: now)
         end
       end
 

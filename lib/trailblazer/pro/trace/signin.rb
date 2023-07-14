@@ -4,11 +4,27 @@ module Trailblazer::Pro
       ctx[:parsed_response] = JSON.parse(response.body)
     end
 
-    class Signin < Trailblazer::Activity::Railway
-      def self.decorate_id_token(ctx, id_token:, **)
-        ctx[:token] = IdToken.new(id_token)
-      end
+    require "jwt"
+    require "date"
+    def self.parse_jwt_token(ctx, id_token:, **)
+      token, _ = JWT.decode(id_token, nil, false, algorithm: "RS256")
 
+      ctx[:jwt_token_exp] = token["exp"]
+      # ctx[:jwt_token] = token
+    end
+
+    def self.parse_expires_at(ctx, jwt_token_exp:, **)
+      ctx[:expires_at] = DateTime.strptime(jwt_token_exp.to_s, "%s")
+    end
+
+    def self.valid?(ctx, now:, expires_at:, **)
+# FIXME
+      puts "id_token expires at #{expires_at}, that is in #{((expires_at - now) * 24 * 60 * 60).to_i} seconds"
+
+      now < expires_at
+    end
+
+    class Signin < Trailblazer::Activity::Railway
       step :request_custom_token
       step Trace.method(:parse_response)
       step :extract_custom_token
@@ -16,15 +32,16 @@ module Trailblazer::Pro
       step :request_id_token
       step Trace.method(:parse_response), id: :parse_firebase_response
       step :extract_id_token
-      step method(:decorate_id_token)
       step :extract_refresh_token
+      step Trace.method(:parse_jwt_token)
+      step Trace.method(:parse_expires_at)
 
       PRO_SIGNIN_PATH = "/api/v1/signin_with_api_key"
 
       # DISCUSS: this is the "outgoing" contract, the variables we should store in {session_params}.
       SESSION_VARIABLE_NAMES = [
         #:custom_token,
-        :id_token, :refresh_token, :token, :firebase_signin_url, :firebase_refresh_url, :firebase_upload_url, :firestore_fields_template
+        :id_token, :refresh_token, :expires_at, :jwt_token_exp, :firebase_signin_url, :firebase_refresh_url, :firebase_upload_url, :firestore_fields_template
       ]
 
       def request_custom_token(ctx, http: Faraday, api_key:, trailblazer_pro_host: "https://pro.trailblazer.to", **) # DISCUSS: do we like the defaulting?
@@ -69,29 +86,6 @@ module Trailblazer::Pro
 
       def extract_refresh_token(ctx, parsed_response:, **)
         ctx[:refresh_token] = parsed_response["refreshToken"]
-      end
-
-      require "jwt"
-      require "date"
-      class IdToken
-        def initialize(firebase_id_token)
-          @firebase_id_token = firebase_id_token
-
-          token, _ = JWT.decode(firebase_id_token, nil, false, algorithm: "RS256")
-          exp = token["exp"]
-
-          expires_at = DateTime.strptime(exp.to_s, "%s")
-
-          @expires_at = expires_at
-          @token      = token
-        end
-
-        def valid?(now:, **)
-# FIXME
-          puts "id_token expires at #{@expires_at}, that is in #{((@expires_at - now) * 24 * 60 * 60).to_i} seconds"
-
-          now < @expires_at
-        end
       end
     end # Signin
   end

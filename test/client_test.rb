@@ -138,7 +138,7 @@ class ClientTest < Minitest::Spec
 
     signal, (ctx, _), _, output, (session, trace_id, debugger_url, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
 
-    assert_equal session.valid?(now: DateTime.now), true
+
     assert_equal trace_id.size, 20
     assert_equal debugger_url, "https://ide.trailblazer.to/#{trace_id}"
     assert_equal Trailblazer::Pro::Session.session, session # session got stored globally
@@ -148,7 +148,6 @@ class ClientTest < Minitest::Spec
   #@ while session is valid, do another call.
     signal, (ctx, _), _, output, (session_2, trace_id_2, debugger_url_2, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}])
 
-    assert_equal session_2.valid?(now: DateTime.now), true
     assert_equal trace_id_2.size, 20
     assert_equal debugger_url_2, "https://ide.trailblazer.to/#{trace_id_2}"
     assert trace_id != trace_id_2
@@ -161,7 +160,6 @@ class ClientTest < Minitest::Spec
   #@ simulate time out, new token required.
     signal, (ctx, _), _, output, (session_3, trace_id_3, debugger_url_3, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}], present_options: {now: DateTime.now + (60 * 6)})
 
-    assert_equal session_3.valid?(now: DateTime.now), true
     assert_equal trace_id_3.size, 20
     assert_equal debugger_url_3, "https://ide.trailblazer.to/#{trace_id_3}"
     assert trace_id != trace_id_3
@@ -171,6 +169,8 @@ class ClientTest < Minitest::Spec
     #@ {id_token} has changed, {refresh_token} stays the same!
     refute_equal session_3_hash[:id_token],       session_2_hash[:id_token]
     assert_equal session_3_hash[:refresh_token],  session_2_hash[:refresh_token]
+
+    pp session_3
 
   #@ simulate refreshable token
 
@@ -185,8 +185,9 @@ class ClientTest < Minitest::Spec
       session_static_options
     assert_equal session_hash[:refresh_token].size, 183
     assert_equal session_hash[:id_token].size, 1054
-    assert_equal session_hash[:token].valid?(now: DateTime.now), true # {:token} is {IdToken} instance
+    # assert_equal session_hash[:token].valid?(now: DateTime.now), true # {:token} is {IdToken} instance
     # refute_equal session_hash[:id_token], old_id_token
+    assert_equal Trailblazer::Pro::Trace.valid?({}, expires_at: session[:expires_at], now: DateTime.now), true
 
     session_hash
   end

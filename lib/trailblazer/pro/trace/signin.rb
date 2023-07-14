@@ -21,7 +21,7 @@ module Trailblazer::Pro
 
       PRO_SIGNIN_PATH = "/api/v1/signin_with_api_key"
 
-      def request_custom_token(ctx, http: Faraday, api_key:, trailblazer_pro_host: "http://localhost:3000", **)
+      def request_custom_token(ctx, http: Faraday, api_key:, trailblazer_pro_host: "https://pro.trailblazer.to", **) # DISCUSS: do we like the defaulting?
         ctx[:response] = http.post(
           "#{trailblazer_pro_host}#{PRO_SIGNIN_PATH}",
           {

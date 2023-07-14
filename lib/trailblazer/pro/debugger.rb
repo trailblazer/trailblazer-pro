@@ -74,14 +74,19 @@ module Trailblazer
           firebase_refresh_url      = ctx[:firebase_refresh_url]
           refresh_token             = ctx[:refresh_token]
 
+          # token, _ = JWT.decode(firebase_id_token, nil, false, algorithm: "RS256")
+          # exp = token["exp"]
+          # expires_at = DateTime.strptime(exp.to_s, "%s")
+
           # TODO: separate step!
           session = Session.new(
+            **session.to_h,
             token:                      token,
             id_token:                   id_token,  # TODO: remove, it's in {token}
             firebase_upload_url:        firebase_upload_url,
             firestore_fields_template:  firestore_fields_template,
             firebase_refresh_url:       firebase_refresh_url,
-            refresh_token:              refresh_token
+            refresh_token:              refresh_token,
           )
         end
 

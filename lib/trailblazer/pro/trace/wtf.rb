@@ -16,11 +16,15 @@ module Trailblazer::Pro
           **options
         )
 
-        (session, trace_id, debugger_url, _trace_envelope) = returned[-1]
+        (session, trace_id, debugger_url, _trace_envelope, session_updated) = returned[-1]
 
-        Session.session = session
+        update_session!(session) if session_updated # DISCUSS: this is a hook for pro-rails, not a massive fan.
 
         returned
+      end
+
+      def self.update_session!(session)
+        Session.session = session
       end
     end
   end

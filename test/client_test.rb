@@ -173,7 +173,7 @@ class ClientTest < Minitest::Spec
     # pp session_3
 
 #@ deserialize test (used in pro-rails)
-    session_3_serialized = session_3.serialize
+    session_3_serialized = Trailblazer::Pro::Session.serialize(session_3)
     assert_equal session_3_serialized.size, 1884 # TODO: assess test.
 
     session_4 = Trailblazer::Pro::Session.deserialize(session_3_serialized)

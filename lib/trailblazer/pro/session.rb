@@ -10,8 +10,8 @@ module Trailblazer
       class Uninitialized < Struct.new(:api_key, :trailblazer_pro_host, keyword_init: true)
       end
 
-      def serialize
-        attributes = to_h
+      def self.serialize(session)
+        attributes = session.to_h
         attributes = attributes.slice(*(attributes.keys - [:expires_at]))
 
         JSON.dump(attributes)
@@ -23,8 +23,6 @@ module Trailblazer
           .merge(expires_at: Trace.parse_exp(data["jwt_token_exp"])) # TODO: use representer
           .collect { |k, v| [k.to_sym, v] }
           .to_h
-
-        # Session.new(data)
       end
     end
 

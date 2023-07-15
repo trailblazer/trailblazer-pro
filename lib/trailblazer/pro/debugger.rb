@@ -15,12 +15,12 @@ module Trailblazer
           }
         }
 
-        session, stored_trace_id = push(trace_envelope, activity: activity, **options)
+        session, stored_trace_id, session_updated = push(trace_envelope, activity: activity, **options)
 
         debugger_url = "https://ide.trailblazer.to/#{stored_trace_id}"
         output       = "[TRB PRO] view trace at #{debugger_url}"
 
-        returned_values = [session, stored_trace_id, debugger_url, trace_envelope]
+        returned_values = [session, stored_trace_id, debugger_url, trace_envelope, session_updated]
 
         return output, returned_values
       end
@@ -67,18 +67,23 @@ module Trailblazer
           )
 
           ctx[:session] = session
+          ctx[:session_updated] = true
         end
 
         step :session_initialized?,
-          Output(:failure) => Path(track_color: :signin, connect_to: Track(:success)) do # FIXME: move to after {valid?}
+          Output(:failure) => Path(track_color: :signin, connect_to: Track(:rebuild)) do # FIXME: move to after {valid?}
             step Subprocess(Trailblazer::Pro::Trace::Signin)
-            step Push.method(:rebuild_session)
+            # step Push.method(:rebuild_session)
           end
         step Trace.method(:valid?),
-          Output(:failure) => Path(track_color: :refresh, connect_to: Track(:success)) do
+          Output(:failure) => Path(track_color: :refresh, connect_to: Track(:rebuild)) do
             step Subprocess(Trailblazer::Pro::Trace::Refresh)
-            step Push.method(:rebuild_session)
           end
+
+        step Push.method(:rebuild_session), magnetic_to: :rebuild # TODO: assert that success/failure go to right Track.
+
+
+
         step Subprocess(Trailblazer::Pro::Trace::Store),
           In() => ->(ctx, session:, **) { session.to_h },
           In() => [:data_to_store]
@@ -86,17 +91,17 @@ module Trailblazer
         def session_initialized?(ctx, session:, **)
           session.is_a?(Session)
         end
-      end
+      end # Push
 
       def push(trace_data, activity:, session:, now: DateTime.now, **options)
         signal, (ctx, _) = Trailblazer::Developer.wtf?(Push, [{session: session, now: now, data_to_store: trace_data, **options}, {}])
 
         session         = ctx[:session]
         stored_trace_id = ctx[:id]
+        session_updated = ctx[:session_updated]
 
-        return session, stored_trace_id
+        return session, stored_trace_id, session_updated
       end
-
     end # Debugger
   end
 end

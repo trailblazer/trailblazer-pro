@@ -19,8 +19,11 @@ module Trailblazer
 
       def self.deserialize(json)
         data = JSON.parse(json)
+
+        options = data.key?("jwt_token_exp") ? {expires_at: Trace.parse_exp(data["jwt_token_exp"])} : {}
+
         data
-          .merge(expires_at: Trace.parse_exp(data["jwt_token_exp"])) # TODO: use representer
+          .merge(options) # TODO: use representer
           .collect { |k, v| [k.to_sym, v] }
           .to_h
       end

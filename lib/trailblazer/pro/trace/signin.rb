@@ -14,7 +14,11 @@ module Trailblazer::Pro
     end
 
     def self.parse_expires_at(ctx, jwt_token_exp:, **)
-      ctx[:expires_at] = DateTime.strptime(jwt_token_exp.to_s, "%s")
+      ctx[:expires_at] = parse_exp(jwt_token_exp)
+    end
+
+    def self.parse_exp(exp)
+      DateTime.strptime(exp.to_s, "%s")
     end
 
     def self.valid?(ctx, now:, expires_at:, **)

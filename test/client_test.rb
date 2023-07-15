@@ -170,7 +170,22 @@ class ClientTest < Minitest::Spec
     refute_equal session_3_hash[:id_token],       session_2_hash[:id_token]
     assert_equal session_3_hash[:refresh_token],  session_2_hash[:refresh_token]
 
-    pp session_3
+    # pp session_3
+
+#@ deserialize test (used in pro-rails)
+    session_3_serialized = session_3.serialize
+    assert_equal session_3_serialized.size, 1884 # TODO: assess test.
+
+    session_4 = Trailblazer::Pro::Session.deserialize(session_3_serialized)
+
+    Trailblazer::Pro.initialize!(**session_4)
+
+    signal, (ctx, _), _, output, (session_5, trace_id_5, debugger_url_5, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}])
+
+    assert_equal trace_id_5.size, 20
+    assert_equal debugger_url_5, "https://ide.trailblazer.to/#{trace_id_5}"
+    assert trace_id_3 != trace_id_5
+    assert_equal Trailblazer::Pro::Session.session, session_3 # new session
 
   #@ simulate refreshable token
 

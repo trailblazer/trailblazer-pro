@@ -2,7 +2,8 @@ module Trailblazer::Pro
   module Trace
     # cache the token for successive runs of {#wtf?}.
     module Wtf
-      def self.call(*args, present_options: {}, **options)
+      module_function
+      def call(*args, present_options: {}, **options)
         session = Session.session
 
         present_options = Session.wtf_present_options
@@ -23,7 +24,7 @@ module Trailblazer::Pro
         returned
       end
 
-      def self.update_session!(session)
+      def update_session!(session)
         Session.session = session
       end
     end

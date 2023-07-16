@@ -39,6 +39,7 @@ module Trailblazer::Pro
       step :extract_refresh_token
       step Trace.method(:parse_jwt_token)
       step Trace.method(:parse_expires_at)
+      # left ->(ctx, response:, **) { puts response.status } #  FIXME: better error handling!
 
       PRO_SIGNIN_PATH = "/api/v1/signin_with_api_key"
 

@@ -3,8 +3,8 @@ module Trailblazer
     module Debugger
       module_function
 
-      # Called in {Trace::Present.call}.
-      def call(debugger_trace:, activity:, **options)
+      # Called in {Trace::Present.call} as {:render_method}.
+      def call(debugger_trace:, activity:, render_wtf: false, renderer:, **options)
         trace_data = render_trace_data(debugger_trace, activity: activity, **options)
 
         trace_envelope = {
@@ -19,6 +19,12 @@ module Trailblazer
 
         debugger_url = "https://ide.trailblazer.to/#{stored_trace_id}"
         output       = "[TRB PRO] view trace at #{debugger_url}"
+
+        if render_wtf
+          wtf_output = Developer::Trace::Present.render(debugger_trace: debugger_trace, renderer: renderer, color_map: Developer::Wtf::Renderer::DEFAULT_COLOR_MAP) # , activity: activity
+
+          output = [wtf_output, output].join("\n")
+        end
 
         returned_values = [session, stored_trace_id, debugger_url, trace_envelope, session_updated]
 

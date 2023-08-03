@@ -4,7 +4,6 @@ require "faraday"
 
 module Trailblazer
   module Pro
-    class Error < StandardError; end
     # Your code goes here...
   end
 end

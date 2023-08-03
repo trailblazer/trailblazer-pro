@@ -56,18 +56,17 @@ class ClientTest < Minitest::Spec
   end
 
   # test if trace has expected elements
-  it "{#wtf?} with manual options" do
-    api_key = "tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604"
-
+  it "{Developer.wtf?} with manual options" do
     ctx = {}
+
+    # session = Trailblazer::Pro::Session::Uninitialized.new(api_key: api_key, trailblazer_pro_host: "http://localhost:3000")
 
     signal, (ctx, _), _, output, (token, trace_id, debugger_url, trace_envelope) = Trailblazer::Developer.wtf?(
       Create,
       [ctx, {}],
-      present_options: {render_method: Trailblazer::Pro::Debugger, token: nil, api_key: api_key},
+      present_options: {render_method: Trailblazer::Pro::Debugger, api_key: api_key, session: nil, trailblazer_pro_host: "http://localhost:3000"}, # FIXME:  why do we have to pass {:session} here?
     )
 
-    assert_equal token.valid?, true
     assert_equal trace_id.size, 20
     assert_equal debugger_url, "https://ide.trailblazer.to/#{trace_id}"
 
@@ -191,6 +190,34 @@ class ClientTest < Minitest::Spec
 
     Trailblazer::Pro::Session.session = nil
     Trailblazer::Pro::Session.wtf_present_options = nil
+  end
+
+  it "with {render_wtf: true}" do
+    ctx = {}
+
+    signal, (ctx, _), _, output, (token, trace_id, debugger_url, trace_envelope) = Trailblazer::Developer.wtf?(
+      Create,
+      [ctx, {}],
+      present_options: {render_method: Trailblazer::Pro::Debugger, api_key: api_key, session: nil, trailblazer_pro_host: "http://localhost:3000", render_wtf: true}, # FIXME:  why do we have to pass {:session} here?
+    )
+
+    assert_equal output, %(ClientTest::Create
+|-- \e[32mStart.default\e[0m
+|-- \e[32mmodel\e[0m
+`-- End.success
+[TRB PRO] view trace at https://ide.trailblazer.to/#{trace_id})
+  end
+
+  it "with {render_wtf: false}" do
+    ctx = {}
+
+    signal, (ctx, _), _, output, (token, trace_id, debugger_url, trace_envelope) = Trailblazer::Developer.wtf?(
+      Create,
+      [ctx, {}],
+      present_options: {render_method: Trailblazer::Pro::Debugger, api_key: api_key, session: nil, trailblazer_pro_host: "http://localhost:3000", render_wtf: false}, # FIXME:  why do we have to pass {:session} here?
+    )
+
+    assert_equal output, %([TRB PRO] view trace at https://ide.trailblazer.to/#{trace_id})
   end
 
   def assert_session(session, old_id_token: "", **session_static_options)

@@ -8,7 +8,7 @@ gemspec
 gem "rake", "~> 13.0"
 
 gem "minitest", "~> 5.0"
-gem "trailblazer-developer"
+# gem "trailblazer-developer", path: "../trailblazer-developer"
 gem "faraday"
 # gem "multi_json"
 # gem "trailblazer-macro", path: "../trailblazer-macro"

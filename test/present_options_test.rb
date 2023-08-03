@@ -39,6 +39,7 @@ class PresentOptionsTest < Minitest::Spec
     assert_equal output, %([TRB PRO] view trace at https://ide.trailblazer.to/#{trace_id})
   end
 
+  # test if trace has expected elements
   it "returned trace data is correct" do
     ctx = {}
 

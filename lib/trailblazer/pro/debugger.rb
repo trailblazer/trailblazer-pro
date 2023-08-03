@@ -21,6 +21,7 @@ module Trailblazer
         output       = "[TRB PRO] view trace at #{debugger_url}"
 
         if render_wtf
+          # TODO: take the color_map from outside caller.
           wtf_output = Developer::Trace::Present.render(debugger_trace: debugger_trace, renderer: renderer, color_map: Developer::Wtf::Renderer::DEFAULT_COLOR_MAP) # , activity: activity
 
           output = [wtf_output, output].join("\n")
@@ -64,7 +65,30 @@ module Trailblazer
       end
 
       class Push < Trailblazer::Activity::Railway
-        def self.rebuild_session(ctx, session:, **)
+        step :session_initialized?,
+          Output(:failure) => Path(track_color: :signin, connect_to: Track(:rebuild)) do # FIXME: move to after {valid?}
+            # Signin only consumes {:api_key} and friends and doesn't know about {:session}.
+            step Subprocess(Trailblazer::Pro::Trace::Signin),
+              In() => :session_to_args#,
+              # Out() => Trace::Signin::SESSION_VARIABLE_NAMES
+          end
+
+        step Trace.method(:valid?),
+          Output(:failure) => Path(track_color: :refresh, connect_to: Track(:rebuild)) do
+            step Subprocess(Trailblazer::Pro::Trace::Refresh)
+          end
+
+        step :rebuild_session, magnetic_to: :rebuild # TODO: assert that success/failure go to right Track.
+
+        step Subprocess(Trailblazer::Pro::Trace::Store),
+          In() => :session_to_args,
+          In() => [:data_to_store]
+
+        def session_initialized?(ctx, session:, **)
+          session.is_a?(Session)
+        end
+
+        def rebuild_session(ctx, session:, **)
           session_params = ctx.to_h.slice(*Trace::Signin::SESSION_VARIABLE_NAMES)
 
           session = Session.new(
@@ -76,31 +100,13 @@ module Trailblazer
           ctx[:session_updated] = true
         end
 
-        step :session_initialized?,
-          Output(:failure) => Path(track_color: :signin, connect_to: Track(:rebuild)) do # FIXME: move to after {valid?}
-            step Subprocess(Trailblazer::Pro::Trace::Signin)
-            # step Push.method(:rebuild_session)
-          end
-        step Trace.method(:valid?),
-          Output(:failure) => Path(track_color: :refresh, connect_to: Track(:rebuild)) do
-            step Subprocess(Trailblazer::Pro::Trace::Refresh)
-          end
-
-        step Push.method(:rebuild_session), magnetic_to: :rebuild # TODO: assert that success/failure go to right Track.
-
-
-
-        step Subprocess(Trailblazer::Pro::Trace::Store),
-          In() => ->(ctx, session:, **) { session.to_h },
-          In() => [:data_to_store]
-
-        def session_initialized?(ctx, session:, **)
-          session.is_a?(Session)
+        def session_to_args(ctx, session:, **)
+          session.to_h
         end
       end # Push
 
-      def push(trace_data, activity:, session:, now: DateTime.now, **options)
-        signal, (ctx, _) = Trailblazer::Developer.wtf?(Push, [{session: session, now: now, data_to_store: trace_data, **options}, {}])
+      def push(trace_data, activity:, now: DateTime.now, **options)
+        signal, (ctx, _) = Trailblazer::Developer.wtf?(Push, [{now: now, data_to_store: trace_data, **options}, {}])
 
         session         = ctx[:session]
         stored_trace_id = ctx[:id]

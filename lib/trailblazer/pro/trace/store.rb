@@ -10,7 +10,7 @@ module Trailblazer::Pro
 
         json_to_store = JSON.dump(data_to_store.merge(fields: fields))#.to_json
 
-        puts "@@@@@ DATA SIZE: #{json_to_store.size / 1024} kb"
+        # puts "@@@@@ DATA SIZE: #{json_to_store.size / 1024} kb"
 
         ctx[:response] = Faraday.post(
           firebase_upload_url,

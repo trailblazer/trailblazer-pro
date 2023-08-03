@@ -13,3 +13,5 @@ Minitest::Spec.class_eval do
   let(:api_key) { "tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604" }
   let(:trailblazer_pro_host) { "http://localhost:3000" }
 end
+
+require "trailblazer/developer" # FIXME.

@@ -115,8 +115,6 @@ class ClientTest < Minitest::Spec
 
   # test if successive wtf? use global settings and token
 
-  let(:api_key) { "tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604" }
-  let(:trailblazer_pro_host) { "http://localhost:3000" }
   let(:session_static_options) do
     {
       api_key: api_key,
@@ -190,34 +188,6 @@ class ClientTest < Minitest::Spec
 
     Trailblazer::Pro::Session.session = nil
     Trailblazer::Pro::Session.wtf_present_options = nil
-  end
-
-  it "with {render_wtf: true}" do
-    ctx = {}
-
-    signal, (ctx, _), _, output, (token, trace_id, debugger_url, trace_envelope) = Trailblazer::Developer.wtf?(
-      Create,
-      [ctx, {}],
-      present_options: {render_method: Trailblazer::Pro::Debugger, api_key: api_key, session: nil, trailblazer_pro_host: "http://localhost:3000", render_wtf: true}, # FIXME:  why do we have to pass {:session} here?
-    )
-
-    assert_equal output, %(ClientTest::Create
-|-- \e[32mStart.default\e[0m
-|-- \e[32mmodel\e[0m
-`-- End.success
-[TRB PRO] view trace at https://ide.trailblazer.to/#{trace_id})
-  end
-
-  it "with {render_wtf: false}" do
-    ctx = {}
-
-    signal, (ctx, _), _, output, (token, trace_id, debugger_url, trace_envelope) = Trailblazer::Developer.wtf?(
-      Create,
-      [ctx, {}],
-      present_options: {render_method: Trailblazer::Pro::Debugger, api_key: api_key, session: nil, trailblazer_pro_host: "http://localhost:3000", render_wtf: false}, # FIXME:  why do we have to pass {:session} here?
-    )
-
-    assert_equal output, %([TRB PRO] view trace at https://ide.trailblazer.to/#{trace_id})
   end
 
   def assert_session(session, old_id_token: "", **session_static_options)

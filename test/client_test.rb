@@ -20,6 +20,11 @@ class ClientTest < Minitest::Spec
     }
   end
 
+  after do
+    Trailblazer::Pro::Session.session = nil
+    Trailblazer::Pro::Session.wtf_present_options = nil
+  end
+
   it "{#wtf?} with global session options" do
     Trailblazer::Pro.initialize!(
       api_key:              api_key,
@@ -81,8 +86,39 @@ class ClientTest < Minitest::Spec
 
   #@ simulate refreshable token
 
-    Trailblazer::Pro::Session.session = nil
-    Trailblazer::Pro::Session.wtf_present_options = nil
+  end
+
+  it "allows global {render_wtf: false}" do
+    Trailblazer::Pro.initialize!(
+      api_key:              api_key,
+      trailblazer_pro_host: trailblazer_pro_host,
+      render_wtf: false,
+    )
+
+    signal, (ctx, _), _, output, (session, trace_id, debugger_url, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
+
+    assert_equal output, %([TRB PRO] view trace at https://ide.trailblazer.to/#{trace_id})
+    assert_equal trace_id.size, 20
+    assert_equal debugger_url, "https://ide.trailblazer.to/#{trace_id}"
+    assert_equal Trailblazer::Pro::Session.session, session # session got stored globally
+
+  # render trace on CLI.
+    Trailblazer::Pro.initialize!(
+      api_key:              api_key,
+      trailblazer_pro_host: trailblazer_pro_host,
+      render_wtf: true,
+    )
+
+    signal, (ctx, _), _, output, (session, trace_id, debugger_url, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
+
+    assert_equal output, %(ClientTest::Create
+|-- \e[32mStart.default\e[0m
+|-- \e[32mmodel\e[0m
+`-- End.success
+[TRB PRO] view trace at https://ide.trailblazer.to/#{trace_id})
+    assert_equal trace_id.size, 20
+    assert_equal debugger_url, "https://ide.trailblazer.to/#{trace_id}"
+    assert_equal Trailblazer::Pro::Session.session, session # session got stored globally
   end
 
   def assert_session(session, old_id_token: "", **session_static_options)

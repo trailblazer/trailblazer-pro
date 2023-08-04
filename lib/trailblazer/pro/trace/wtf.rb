@@ -8,7 +8,6 @@ module Trailblazer::Pro
 
         present_options = Session.wtf_present_options
           .merge(present_options)
-          .merge(session.to_h)
           .merge(session: session)
 
         returned = Trailblazer::Developer.wtf?(

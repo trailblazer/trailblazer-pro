@@ -18,6 +18,8 @@ gem "trailblazer-pro"
 Retrieve you API key from https://pro.trailblazer.to/settings.
 It will be something like `tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604`.
 
-## Testing
+## Internals
 
-Either run against our hosted https://test-pro-rails-jwt.onrender.com TRB PRO host, or locally.
+### Testing
+
+Either run against our hosted https://test-pro-rails-jwt.onrender.com TRB PRO host, or locally. This is currently set in `test/test_helper.rb`.

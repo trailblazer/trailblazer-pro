@@ -73,9 +73,9 @@ module Trailblazer
               # Out() => Trace::Signin::SESSION_VARIABLE_NAMES
           end
 
-        step Trace.method(:valid?),
+        step Trace.method(:valid?), In() => :session_to_args, Inject() => [:now],
           Output(:failure) => Path(track_color: :refresh, connect_to: Track(:rebuild)) do
-            step Subprocess(Trailblazer::Pro::Trace::Refresh)
+            step Subprocess(Trailblazer::Pro::Trace::Refresh), In() => :session_to_args
           end
 
         step :rebuild_session, magnetic_to: :rebuild # TODO: assert that success/failure go to right Track.

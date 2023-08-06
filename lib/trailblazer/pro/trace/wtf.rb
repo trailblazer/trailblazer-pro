@@ -3,6 +3,8 @@ module Trailblazer::Pro
     # cache the token for successive runs of {#wtf?}.
     module Wtf
       module_function
+      # DISCUSS: this is called inside the monkey-patch for Activity/Operation.()
+      # in {Pro::Call.call}.
       def call(*args, present_options: {}, **options)
         present_options = Session.wtf_present_options
           .merge(present_options)

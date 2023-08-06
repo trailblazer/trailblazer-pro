@@ -18,7 +18,10 @@ module Trailblazer
         session, stored_trace_id, session_updated = push(trace_envelope, activity: activity, **options)
 
         debugger_url = "https://ide.trailblazer.to/#{stored_trace_id}"
-        output       = "[TRB PRO] view trace at #{debugger_url}"
+        # output       = "[TRB PRO] view trace (#{activity}) at #{debugger_url}"
+        # output       = Developer::Wtf::Renderer::String.bold(output)
+        output       = Developer::Wtf::Renderer::String.bold("[TRB PRO] view trace (#{activity}) at ")
+        output += debugger_url # DISCUSS: what do we want bold here?
 
         if render_wtf
           # TODO: take the color_map from outside caller.
@@ -106,7 +109,9 @@ module Trailblazer
       end # Push
 
       def push(trace_data, activity:, now: DateTime.now, **options)
-        signal, (ctx, _) = Trailblazer::Developer.wtf?(Push, [{now: now, data_to_store: trace_data, **options}, {}])
+        # signal, (ctx, _) = Trailblazer::Developer.wtf?(Push, [{now: now, data_to_store: trace_data, **options}, {}])
+        signal, (ctx, _) = Trailblazer::Activity.(Push, {now: now, data_to_store: trace_data, **options})
+        # signal, (ctx, _) = Push.invoke([{now: now, data_to_store: trace_data, **options}, {}])
 
         session         = ctx[:session]
         stored_trace_id = ctx[:id]

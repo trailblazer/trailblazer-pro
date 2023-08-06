@@ -24,7 +24,7 @@ class PresentOptionsTest < Minitest::Spec
 |-- \e[32mStart.default\e[0m
 |-- \e[32mmodel\e[0m
 `-- End.success
-[TRB PRO] view trace at https://ide.trailblazer.to/#{trace_id})
+\e[1m[TRB PRO] view trace (PresentOptionsTest::Create) at \e[22mhttps://ide.trailblazer.to/#{trace_id})
   end
 
   it "with {render_wtf: false}" do
@@ -36,7 +36,7 @@ class PresentOptionsTest < Minitest::Spec
       present_options: {render_method: Trailblazer::Pro::Debugger, session: uninitialized_session, render_wtf: false}, # FIXME:  why do we have to pass {:session} here?
     )
 
-    assert_equal output, %([TRB PRO] view trace at https://ide.trailblazer.to/#{trace_id})
+    assert_equal output, %(\e[1m[TRB PRO] view trace (PresentOptionsTest::Create) at \e[22mhttps://ide.trailblazer.to/#{trace_id})
   end
 
   # test if trace has expected elements

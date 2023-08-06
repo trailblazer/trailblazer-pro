@@ -6,6 +6,9 @@ module Trailblazer
     class Session < Struct.new(:expires_at, :jwt_token_exp, :id_token, :firebase_upload_url, :firestore_fields_template, :firebase_refresh_url, :firebase_signin_url, :refresh_token, :api_key, :trailblazer_pro_host, keyword_init: true)
       singleton_class.attr_accessor :wtf_present_options
       singleton_class.attr_accessor :session
+      singleton_class.attr_accessor :trace_guards
+
+      self.trace_guards = []
 
       class Uninitialized < Struct.new(:api_key, :trailblazer_pro_host, keyword_init: true)
       end

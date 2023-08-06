@@ -1,6 +1,5 @@
 module Trailblazer::Pro
   module Trace
-    # cache the token for successive runs of {#wtf?}.
     module Wtf
       module_function
       # DISCUSS: this is called inside the monkey-patch for Activity/Operation.()
@@ -10,7 +9,7 @@ module Trailblazer::Pro
           .merge(present_options)
           .merge(session: Session.session)
 
-        returned = Trailblazer::Developer.wtf?(
+        returned = Trailblazer::Developer::Wtf.invoke( # identical to {Developer.wtf?}.
           *args,
           present_options: present_options,
           **options
@@ -21,6 +20,10 @@ module Trailblazer::Pro
         update_session!(session) if session_updated # DISCUSS: this is a hook for pro-rails, not a massive fan.
 
         returned
+      end
+
+      class << self
+        alias invoke call
       end
 
       def update_session!(session)

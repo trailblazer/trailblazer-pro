@@ -9,7 +9,7 @@ module Trailblazer
           trace_strategy, present_options_merge = Pro::Session.trace_guards.(activity, ctx)
 
           if trace_strategy
-            return trace_strategy.(activity, [ctx, {}], present_options: present_options_merge)
+            return trace_strategy.invoke(activity, [ctx, {}], present_options: present_options_merge)
           else
             return super
           end

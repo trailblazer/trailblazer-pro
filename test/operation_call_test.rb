@@ -12,12 +12,34 @@ class OperationCallTest < Minitest::Spec
     end
   end
 
+  # Always run web tracing.
+  it "Operation.WTF?" do
+    Trailblazer::Pro.initialize!(api_key: api_key, trailblazer_pro_host: trailblazer_pro_host)
+
+    # FIXME: monkey-patch world-wide
+    Trailblazer::Operation.extend(Trailblazer::Pro::Operation::WTF)
+
+    output, _ = capture_io do
+      signal, (ctx, _) = Create.WTF?({params: {}})
+    end
+
+    trace_id = output[-21..-1]
+
+    assert_equal output, %(OperationCallTest::Create
+|-- \e[32mStart.default\e[0m
+|-- \e[32mmodel\e[0m
+`-- End.success
+\e[1m[TRB PRO] view trace (OperationCallTest::Create) at \e[22mhttps://ide.trailblazer.to/#{trace_id}) # Create is on CLI and web.
+
+    # also test if monkey-patched Operation still traces, even with settings saying no.
+  end
+
   # Test when people don't use wtf? anymore but (Activity.call), only.
   # This is an end-to-end test, we can really only assert CLI output.
   it "web/cli trace settings" do
     Trailblazer::Pro.initialize!(api_key: api_key, trailblazer_pro_host: trailblazer_pro_host)
 
-    Trailblazer::Operation.extend(Trailblazer::Pro::Call::Operation)
+    Trailblazer::Operation.extend(Trailblazer::Pro::Operation::Call)
     Trailblazer::Activity.extend(Trailblazer::Pro::Call::Activity)
 
     Trailblazer::Pro::Session.trace_guards = Trailblazer::Pro::Trace::Decision.new(
@@ -33,7 +55,7 @@ class OperationCallTest < Minitest::Spec
     output, _ = capture_io do
       signal, (ctx, _) = Create.({params: {}})
     end
-puts output
+
     # 1. Push is traced on CLI
     # 2. Create is CLI and web.
 

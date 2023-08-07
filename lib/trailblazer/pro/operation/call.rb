@@ -1,7 +1,7 @@
 module Trailblazer
   module Pro
-    module Call
-      module Operation
+    module Operation
+      module Call
         # This is the monkey-patch for {Operation.call}.
         # Here we decide whether to use tracing, and what to render,
         # or if we should bypass tracing.
@@ -15,7 +15,7 @@ module Trailblazer
             super
           end
         end
-      end # Operation
-    end
+      end
+    end # Operation
   end
 end

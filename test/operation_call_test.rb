@@ -15,6 +15,7 @@ class OperationCallTest < Minitest::Spec
   # Always run web tracing.
   it "Operation.WTF?" do
     Trailblazer::Pro.initialize!(api_key: api_key, trailblazer_pro_host: trailblazer_pro_host)
+    Trailblazer::Pro::Session.trace_guards = Trailblazer::Pro::Trace::Decision.new([]) # FIXME: we need separate test environments with and without monkey-patching.
 
     # FIXME: monkey-patch world-wide
     Trailblazer::Operation.extend(Trailblazer::Pro::Operation::WTF)

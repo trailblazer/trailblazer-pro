@@ -20,11 +20,6 @@ class ClientTest < Minitest::Spec
     }
   end
 
-  after do
-    Trailblazer::Pro::Session.session = nil
-    Trailblazer::Pro::Session.wtf_present_options = nil
-  end
-
   it "{#wtf?} with global session options" do
     Trailblazer::Pro.initialize!(
       api_key:              api_key,

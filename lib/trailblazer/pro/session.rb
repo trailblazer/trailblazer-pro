@@ -8,7 +8,8 @@ module Trailblazer
       singleton_class.attr_accessor :session
       singleton_class.attr_accessor :trace_guards
 
-      self.trace_guards = Pro::Trace::Decision.new([->(*) { [Trace::Wtf, {}] }]) # always use Pro web/CLI tracing per default.
+      self.trace_guards = Trailblazer::Pro::Trace::Decision.new([]) # here we say "don't trace anything!"
+      # .trace_guards = Pro::Trace::Decision.new([->(*) { [Trace::Wtf, {}] }]) # always use Pro web/CLI tracing per default.
 
       class Uninitialized < Struct.new(:api_key, :trailblazer_pro_host, keyword_init: true)
       end

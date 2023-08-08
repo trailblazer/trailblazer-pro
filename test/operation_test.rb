@@ -101,7 +101,7 @@ class NoExtendOperationTest < Minitest::Spec
 end
 
 class ExtendedOperationCallTest < Minitest::Spec
-  it "no trace_guards configured, but everything else installed" do
+  it "no trace_guards configured, but everything else installed will trace on both CLI and web" do
     operation = Class.new(Create)
       .extend(Trailblazer::Pro::Operation::WTF)
       .extend(Trailblazer::Pro::Operation::Call) # this adds trace_guards.
@@ -113,5 +113,20 @@ class ExtendedOperationCallTest < Minitest::Spec
     end
 
     assert_web_and_cli_trace(output, operation: operation)
+  end
+
+  it "extended Operation and {wtf?} will trace on CLI, only (unless {trace_guards} defined)" do
+    operation = Class.new(Create)
+      .extend(Trailblazer::Pro::Operation::WTF)
+      .extend(Trailblazer::Pro::Operation::Call) # this adds trace_guards.
+
+    Trailblazer::Pro.initialize!(api_key: api_key, trailblazer_pro_host: trailblazer_pro_host)
+
+    output, _ = capture_io do
+      signal, _ = operation.wtf?(params: {})
+    end
+
+    # We simply print the CLI trace.
+    assert_cli_trace(output, operation: operation)
   end
 end

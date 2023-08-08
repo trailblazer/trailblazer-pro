@@ -11,6 +11,8 @@ module Trailblazer
 
           if trace_strategy
             # trace_strategy.invoke(activity, [ctx, {}], present_options: present_options_merge)
+
+              # local invoke_class is overridden by circuit_options
             super(options, flow_options, invoke_class: trace_strategy, **circuit_options, present_options: present_options_merge)
           else
             super

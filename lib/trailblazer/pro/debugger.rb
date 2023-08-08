@@ -110,7 +110,7 @@ module Trailblazer
 
       def push(trace_data, activity:, now: DateTime.now, **options)
         # signal, (ctx, _) = Trailblazer::Developer.wtf?(Push, [{now: now, data_to_store: trace_data, **options}, {}])
-        signal, (ctx, _) = Trailblazer::Activity.(Push, {now: now, data_to_store: trace_data, **options})
+        _signal, (ctx, _) = Trailblazer::Activity.(Push, {now: now, data_to_store: trace_data, **options})
         # signal, (ctx, _) = Push.invoke([{now: now, data_to_store: trace_data, **options}, {}])
 
         session         = ctx[:session]

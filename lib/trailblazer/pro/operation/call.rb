@@ -1,6 +1,7 @@
 module Trailblazer
   module Pro
     module Operation
+      # @private This is experimental.
       module Call
         # This is the monkey-patch for {Operation.call}.
         # Here we decide whether to use tracing, and what to render,

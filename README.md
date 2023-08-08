@@ -24,6 +24,9 @@ It will be something like `tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604`.
 
 Either run against our hosted https://test-pro-rails-jwt.onrender.com TRB PRO host, or locally. This is currently set in `test/test_helper.rb`.
 
+
+* `test/no_extend` Tests an environment where no monkey-patches happened, and if, only on anonymous classes.
+
 ### Notes
 
 * With `endpoint`, monkey-patching might become obsolete, since we can inject {:present_options} transparently.

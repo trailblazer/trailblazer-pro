@@ -1,6 +1,6 @@
 require "test_helper"
 
-class ClientTest < Minitest::Spec
+class WtfTest < Minitest::Spec
   class Create < Trailblazer::Activity::Railway
     step :model
 
@@ -92,7 +92,7 @@ class ClientTest < Minitest::Spec
 
     signal, (ctx, _), _, output, (session, trace_id, debugger_url, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
 
-    assert_equal output, %(\e[1m[TRB PRO] view trace (ClientTest::Create) at \e[22mhttps://ide.trailblazer.to/#{trace_id})
+    assert_equal output, %(\e[1m[TRB PRO] view trace (WtfTest::Create) at \e[22mhttps://ide.trailblazer.to/#{trace_id})
     assert_equal trace_id.size, 20
     assert_equal debugger_url, "https://ide.trailblazer.to/#{trace_id}"
     assert_equal Trailblazer::Pro::Session.session, session # session got stored globally
@@ -106,11 +106,11 @@ class ClientTest < Minitest::Spec
 
     signal, (ctx, _), _, output, (session, trace_id, debugger_url, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
 
-    assert_equal output, %(ClientTest::Create
+    assert_equal output, %(WtfTest::Create
 |-- \e[32mStart.default\e[0m
 |-- \e[32mmodel\e[0m
 `-- End.success
-\e[1m[TRB PRO] view trace (ClientTest::Create) at \e[22mhttps://ide.trailblazer.to/#{trace_id})
+\e[1m[TRB PRO] view trace (WtfTest::Create) at \e[22mhttps://ide.trailblazer.to/#{trace_id})
     assert_equal trace_id.size, 20
     assert_equal debugger_url, "https://ide.trailblazer.to/#{trace_id}"
     assert_equal Trailblazer::Pro::Session.session, session # session got stored globally

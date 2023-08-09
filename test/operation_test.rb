@@ -175,4 +175,40 @@ class ExtendedOperationCallTest < Minitest::Spec
 
     assert_equal output, %()
   end
+
+  it "with trace_guards DSL, we trace in {Operation.call()} for selected OPs" do
+    create = Class.new(Create)
+      .extend(Trailblazer::Pro::Operation::WTF)
+
+    update = Class.new(Create)
+
+    Trailblazer::Pro.initialize!(api_key: api_key, trailblazer_pro_host: trailblazer_pro_host)
+    Trailblazer::Pro.trace_operations!(
+      create => true,                             # [Trailblazer::Pro::Trace::Wtf, {}]
+      update => Trailblazer::Developer::Wtf
+    )
+
+    output, _ = capture_io do
+      signal, _ = create.(params: {})
+    end
+
+    # We simply print the CLI trace.
+    assert_web_and_cli_trace(output, operation: create)
+
+  # run another OP with a different strategy
+    output, _ = capture_io do
+      signal, _ = update.(params: {})
+      assert_equal signal.success?, true
+    end
+
+    assert_cli_trace output, operation: update
+
+  # run another op without Operation::Call
+    output, _ = capture_io do
+      signal, _ = Create.(params: {})
+      assert_equal signal.success?, true
+    end
+
+    assert_equal output, %()
+  end
 end

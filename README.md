@@ -13,6 +13,10 @@ Add this line to your application's Gemfile:
 gem "trailblazer-pro"
 ```
 
+## Rails support
+
+Check out the [Rails support docs](https://trailblazer.to/2.1/docs/pro) of `trailblazer-pro-rails` if you want to start web-debugging right away.
+
 ## Trace
 
 Retrieve you API key from https://pro.trailblazer.to/settings.

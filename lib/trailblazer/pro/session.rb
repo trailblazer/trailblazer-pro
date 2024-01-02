@@ -60,9 +60,9 @@ module Trailblazer
       def trace_operations(operation_hash)
         decisions =
           if operation_hash == :all
-            Trailblazer::Operation.extend(Trailblazer::Pro::Operation::Call)
+            Trailblazer::Operation.extend(Trailblazer::Pro::Operation::Call) # extend all OPs.
 
-            raise "implement me"
+            [->(*) { [Trace::Wtf, {}] }]
           elsif operation_hash.is_a?(Hash)
             operation_hash.collect do |operation, strategy| # DISCUSS: this can be easily made faster for runtime.
               operation.extend(Trailblazer::Pro::Operation::Call) # only extend selected OPs.

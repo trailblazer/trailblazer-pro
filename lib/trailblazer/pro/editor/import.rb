@@ -11,7 +11,6 @@ module Trailblazer
 
           ctx[:response] = response = Faraday.get(
             "#{session.trailblazer_pro_host}/api/v2/diagrams/#{diagram_slug}/export",
-            # "",
             {},
             {'Content-Type'=>'application/json', "Accept": "application/json",
               "Authorization": "Bearer #{id_token}"

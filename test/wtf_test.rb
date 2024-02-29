@@ -35,7 +35,7 @@ class WtfTest < Minitest::Spec
     assert_equal debugger_url, "https://ide.trailblazer.to/#{trace_id}"
     assert_equal Trailblazer::Pro::Session.session, session # session got stored globally
 
-    session_1_hash = assert_session(session, **session_static_options)
+    session_1_hash = assert_session({session: session}, **session_static_options)
 
   #@ while session is valid, do another call.
     signal, (ctx, _), _, output, (session_2, trace_id_2, debugger_url_2, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}])
@@ -45,7 +45,7 @@ class WtfTest < Minitest::Spec
     assert trace_id != trace_id_2
     assert_equal Trailblazer::Pro::Session.session, session # still the same session
 
-    session_2_hash = assert_session(session_2, **session_static_options)
+    session_2_hash = assert_session({session: session_2}, **session_static_options)
     #@ id_token hasn't changed!
     assert_equal session_1_hash[:id_token], session_2_hash[:id_token]
 
@@ -57,7 +57,7 @@ class WtfTest < Minitest::Spec
     assert trace_id != trace_id_3
     assert_equal Trailblazer::Pro::Session.session, session_3 # new session
 
-    session_3_hash = assert_session(session_3, **session_static_options)
+    session_3_hash = assert_session({session: session_3}, **session_static_options)
     #@ {id_token} has changed, {refresh_token} stays the same!
     refute_equal session_3_hash[:id_token],       session_2_hash[:id_token]
     assert_equal session_3_hash[:refresh_token],  session_2_hash[:refresh_token]

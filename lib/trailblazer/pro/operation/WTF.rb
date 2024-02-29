@@ -5,8 +5,8 @@ module Trailblazer
         # {Operation.WTF?} will always use web tracing and CLI.
         def WTF?(options)
           call_with_public_interface(
-            options, 
-            {}, 
+            options,
+                         {},
             invoke_class:     Trailblazer::Pro::Trace::Wtf, 
             present_options: {render_wtf: true}
           )

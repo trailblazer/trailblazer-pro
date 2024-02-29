@@ -51,10 +51,10 @@ module Trailblazer
             ctx_snapshots: {
               before: debugger_node.snapshot_before.data[:ctx_variable_changeset].collect { |name, hash, has_changed| [name, {version: hash.to_s, has_changed: !!has_changed}] },
               after:  debugger_node.snapshot_after ?
-
-              debugger_node.snapshot_after.data[:ctx_variable_changeset].collect { |name, hash, has_changed| [name, {version: hash.to_s, has_changed: !!has_changed}] } # FIXME: of course, this is horrible.
-              : [],
+                debugger_node.snapshot_after.data[:ctx_variable_changeset].collect { |name, hash, has_changed| [name, {version: hash.to_s, has_changed: !!has_changed}] } # FIXME: of course, this is horrible.
+                : [],
             },
+            returned_signal: debugger_node.snapshot_after ? debugger_node.snapshot_after.data[:signal] : nil, # TODO: test an exception wtf? trace.
 
             rendered_task_wrap: tw_render,
           }
@@ -68,46 +68,14 @@ module Trailblazer
       end
 
       class Push < Trailblazer::Activity::Railway
-        step :session_initialized?,
-          Output(:failure) => Path(track_color: :signin, connect_to: Track(:rebuild)) do # FIXME: move to after {valid?}
-            # Signin only consumes {:api_key} and friends and doesn't know about {:session}.
-            step Subprocess(Trailblazer::Pro::Trace::Signin),
-              In() => :session_to_args#,
-              # Out() => Trace::Signin::SESSION_VARIABLE_NAMES
-          end
-
-        step Trace.method(:valid?), In() => :session_to_args, Inject() => [:now],
-          Output(:failure) => Path(track_color: :refresh, connect_to: Track(:rebuild)) do
-            step Subprocess(Trailblazer::Pro::Trace::Refresh), In() => :session_to_args
-          end
-
-        step :rebuild_session, magnetic_to: :rebuild # TODO: assert that success/failure go to right Track.
-
+        step Subprocess(Client::Connect) # TODO: assert that success/failure go to right Track.
         step Subprocess(Trailblazer::Pro::Trace::Store),
-          In() => :session_to_args,
-          In() => [:data_to_store]
-
-        def session_initialized?(ctx, session:, **)
-          session.is_a?(Session)
-        end
-
-        def rebuild_session(ctx, session:, **)
-          session_params = ctx.to_h.slice(*Trace::Signin::SESSION_VARIABLE_NAMES)
-
-          session = Session.new(
-            **session.to_h,  # old data
-            **session_params, # new input
-          )
-
-          ctx[:session] = session
-          ctx[:session_updated] = true
-        end
-
-        def session_to_args(ctx, session:, **)
-          session.to_h
-        end
+          In() => Client.method(:session_to_args),
+          In() => [:data_to_store],
+          id: :store
       end # Push
 
+      # DISCUSS: who defaults {:now}?
       def push(trace_data, activity:, now: DateTime.now, **options)
         # signal, (ctx, _) = Trailblazer::Developer.wtf?(Push, [{now: now, data_to_store: trace_data, **options}, {}])
         _signal, (ctx, _) = Trailblazer::Activity.(Push, {now: now, data_to_store: trace_data, **options})

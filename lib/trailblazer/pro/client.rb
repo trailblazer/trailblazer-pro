@@ -6,6 +6,12 @@ module Trailblazer
     # Internally, {Signin} and {Refresh} don't know about session, only kwargs.
     module Client
       module_function
+
+      # In() filter.
+      def session_to_args(ctx, session:, **)
+        session.to_h
+      end
+
       # session_initialized? --> <> --> valid? --> <> -----------------------------------> (o)
       #                           |                 | --> Refresh --V                       ^
       #                           | --> Signin --------------------->  rebuild_session -->  |
@@ -15,13 +21,13 @@ module Trailblazer
           Output(:failure) => Path(track_color: :signin, connect_to: Track(:rebuild)) do # FIXME: move to after {valid?}
             # Signin only consumes {:api_key} and friends and doesn't know about {:session}.
             step Subprocess(Signin),
-              In() => :session_to_args#,
+              In() => Client.method(:session_to_args)#,
               # Out() => Trace::Signin::SESSION_VARIABLE_NAMES
           end
 
-        step Client.method(:valid?), In() => :session_to_args, Inject() => [:now],
+        step Client.method(:valid?), In() => Client.method(:session_to_args), Inject() => [:now],
           Output(:failure) => Path(track_color: :refresh, connect_to: Track(:rebuild)) do
-            step Subprocess(Refresh), In() => :session_to_args
+            step Subprocess(Refresh), In() => Client.method(:session_to_args)
           end
 
         step :rebuild_session, magnetic_to: :rebuild # TODO: assert that success/failure go to right Track.
@@ -40,10 +46,6 @@ module Trailblazer
 
           ctx[:session] = session
           ctx[:session_updated] = true
-        end
-
-        def session_to_args(ctx, session:, **)
-          session.to_h
         end
       end
     end # Client

@@ -37,7 +37,7 @@ Minitest::Spec.class_eval do
 )
   end
 
-  def assert_session(ctx, old_id_token: "", session_updated: false, **session_static_options)
+  def assert_session(ctx, old_id_token: "", session_updated: nil, **session_static_options)
     session = ctx[:session]
     session_hash = session.to_h
 

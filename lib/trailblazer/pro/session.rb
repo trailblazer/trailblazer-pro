@@ -24,7 +24,7 @@ module Trailblazer
       def self.deserialize(json)
         data = JSON.parse(json)
 
-        options = data.key?("jwt_token_exp") ? {expires_at: Trace.parse_exp(data["jwt_token_exp"])} : {}
+        options = data.key?("jwt_token_exp") ? {expires_at: Client.parse_exp(data["jwt_token_exp"])} : {}
 
         data
           .merge(options) # TODO: use representer
@@ -43,6 +43,7 @@ module Trailblazer
         # **options
       }
 
+      # FIXME: we're repeating code/knowledge from Client::Connect here.
       if id_token
         Session.session = Trailblazer::Pro::Session.new(api_key: api_key, id_token: id_token, **options)
       else

@@ -23,7 +23,7 @@ module Trailblazer
         end
 
         def store_document(ctx, pro_json_document:, target_filename:, **)
-          File.write(target_filename, pro_json_document)
+          File.write(target_filename, pro_json_document) > 0
         end
       end
 

@@ -10,8 +10,9 @@ end
 
 require_relative "pro/trace/decision"
 require_relative "pro/session"
-require_relative "pro/trace/signin"
-require_relative "pro/trace/refresh"
+require_relative "pro/client/signin"
+require_relative "pro/client/refresh"
+require_relative "pro/client"
 require_relative "pro/trace/store"
 require_relative "pro/trace/wtf"
 require_relative "pro/debugger"

@@ -8,9 +8,8 @@ Minitest::Spec.class_eval do
     super(expected, asserted)
   end
 
-  let(:api_key) { "tpka_f5c698e2_d1ac_48fa_b59f_70e9ab100604" }
-  # let(:trailblazer_pro_host) { "http://localhost:3000" }
-  let(:trailblazer_pro_host) { "https://test-pro-rails-jwt.onrender.com" }
+  let(:api_key) { "tpka_909ae987_c834_43e4_9869_2eefd2aa9bcf" }
+  let(:trailblazer_pro_host) { "https://testbackend-pro.trb.to" }
 
   after do
     Trailblazer::Pro::Session.session = nil
@@ -36,6 +35,20 @@ Minitest::Spec.class_eval do
 |-- \e[32mmodel\e[0m
 `-- End.success
 )
+  end
+
+  def assert_session(session, old_id_token: "", **session_static_options)
+    session_hash = session.to_h
+
+    assert_equal session_hash.slice(:firebase_upload_url, :firestore_fields_template, :firebase_refresh_url, :api_key, :trailblazer_pro_host).sort,
+      session_static_options.sort
+    assert_equal session_hash[:refresh_token].size, 183
+    assert_equal session_hash[:id_token].size, 1054
+    # assert_equal session_hash[:token].valid?(now: DateTime.now), true # {:token} is {IdToken} instance
+    # refute_equal session_hash[:id_token], old_id_token
+    assert_equal Trailblazer::Pro::Client.valid?({}, expires_at: session[:expires_at], now: DateTime.now), true
+
+    session_hash
   end
 end
 

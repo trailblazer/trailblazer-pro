@@ -1,27 +1,30 @@
+require "jwt"
+require "date"
+
 module Trailblazer::Pro
-  module Trace
-    def self.parse_response(ctx, response:, **)
+  module Client
+    module_function
+
+    def parse_response(ctx, response:, **)
       ctx[:parsed_response] = JSON.parse(response.body)
     end
 
-    require "jwt"
-    require "date"
-    def self.parse_jwt_token(ctx, id_token:, **)
+    def parse_jwt_token(ctx, id_token:, **)
       token, _ = JWT.decode(id_token, nil, false, algorithm: "RS256")
 
       ctx[:jwt_token_exp] = token["exp"]
       # ctx[:jwt_token] = token
     end
 
-    def self.parse_expires_at(ctx, jwt_token_exp:, **)
+    def parse_expires_at(ctx, jwt_token_exp:, **)
       ctx[:expires_at] = parse_exp(jwt_token_exp)
     end
 
-    def self.parse_exp(exp)
+    def parse_exp(exp)
       DateTime.strptime(exp.to_s, "%s")
     end
 
-    def self.valid?(ctx, now:, expires_at:, **)
+    def valid?(ctx, now:, expires_at:, **)
 # FIXME
       puts "id_token expires at #{expires_at}, that is in #{((expires_at - now) * 24 * 60 * 60).to_i} seconds"
 
@@ -30,15 +33,15 @@ module Trailblazer::Pro
 
     class Signin < Trailblazer::Activity::Railway
       step :request_custom_token
-      step Trace.method(:parse_response)
+      step Client.method(:parse_response)
       step :extract_custom_token
       step :extract_data_for_firebase
       step :request_id_token
-      step Trace.method(:parse_response), id: :parse_firebase_response
+      step Client.method(:parse_response), id: :parse_firebase_response
       step :extract_id_token
       step :extract_refresh_token
-      step Trace.method(:parse_jwt_token)
-      step Trace.method(:parse_expires_at)
+      step Client.method(:parse_jwt_token)
+      step Client.method(:parse_expires_at)
       # left ->(ctx, response:, **) { puts response.status } #  FIXME: better error handling!
 
       PRO_SIGNIN_PATH = "/api/v1/signin_with_api_key"
@@ -49,7 +52,7 @@ module Trailblazer::Pro
         :id_token, :refresh_token, :expires_at, :jwt_token_exp, :firebase_signin_url, :firebase_refresh_url, :firebase_upload_url, :firestore_fields_template
       ]
 
-      def request_custom_token(ctx, http: Faraday, api_key:, trailblazer_pro_host: "https://pro.trailblazer.to", **) # DISCUSS: do we like the defaulting?
+      def request_custom_token(ctx, http: Faraday, api_key:, trailblazer_pro_host:, **)
         ctx[:response] = http.post(
           "#{trailblazer_pro_host}#{PRO_SIGNIN_PATH}",
           {

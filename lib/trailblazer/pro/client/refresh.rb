@@ -1,12 +1,12 @@
 module Trailblazer::Pro
-  module Trace
+  module Client
     class Refresh < Trailblazer::Activity::Railway
       step :refresh_id_token
-      step Trace.method(:parse_response)
+      step Client.method(:parse_response)
       step :extract_id_token
       step :extract_refresh_token
-      step Trace.method(:parse_jwt_token)
-      step Trace.method(:parse_expires_at)
+      step Client.method(:parse_jwt_token)
+      step Client.method(:parse_expires_at)
 
       def refresh_id_token(ctx, http: Faraday, refresh_token:, firebase_refresh_url:, **)
         ctx[:response] = http.post(

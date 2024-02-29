@@ -13,10 +13,18 @@ class ClientTest < Minitest::Spec
 
 
   it "Client.() maintains a valid session/JWT for us" do
+  #@ Uninitialized sigin
     initial_session = Trailblazer::Pro::Session::Uninitialized.new(trailblazer_pro_host: trailblazer_pro_host, api_key: api_key)
 
     signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Client::Connect, [{session: initial_session}, {}])
 
-    assert_session ctx[:session], **session_static_options
+    assert_session ctx, **session_static_options, session_updated: true
+
+  #@ reuse still valid session
+    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Client::Connect, [{session: ctx[:session], now: DateTime.now}, {}])
+
+    assert_session ctx, **session_static_options, session_updated: nil
+
+
   end
 end

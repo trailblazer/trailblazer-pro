@@ -37,7 +37,8 @@ Minitest::Spec.class_eval do
 )
   end
 
-  def assert_session(session, old_id_token: "", **session_static_options)
+  def assert_session(ctx, old_id_token: "", session_updated: false, **session_static_options)
+    session = ctx[:session]
     session_hash = session.to_h
 
     assert_equal session_hash.slice(:firebase_upload_url, :firestore_fields_template, :firebase_refresh_url, :api_key, :trailblazer_pro_host).sort,
@@ -47,6 +48,7 @@ Minitest::Spec.class_eval do
     # assert_equal session_hash[:token].valid?(now: DateTime.now), true # {:token} is {IdToken} instance
     # refute_equal session_hash[:id_token], old_id_token
     assert_equal Trailblazer::Pro::Client.valid?({}, expires_at: session[:expires_at], now: DateTime.now), true
+    assert_equal ctx[:session_updated], session_updated
 
     session_hash
   end

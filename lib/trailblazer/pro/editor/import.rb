@@ -9,7 +9,7 @@ module Trailblazer
         def retrieve_document(ctx, session:, diagram_slug:, **)
           id_token = session.id_token
 
-          ctx[:response] = Faraday.get(
+          ctx[:response] = response = Faraday.get(
             "#{session.trailblazer_pro_host}/api/v2/diagrams/#{diagram_slug}/export",
             # "",
             {},
@@ -18,12 +18,12 @@ module Trailblazer
             }
           )
 
+          return false unless response.status == 200 # TODO: abstract this for other users, and use "endpoint" paths.
+
           ctx[:pro_json_document] = ctx[:response].body
         end
 
         def store_document(ctx, pro_json_document:, target_filename:, **)
-          # parsed_json = JSON.parse(pro_json_document) # DISCUSS: separate step?
-
           File.write(target_filename, pro_json_document)
         end
       end

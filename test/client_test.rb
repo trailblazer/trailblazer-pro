@@ -25,6 +25,9 @@ class ClientTest < Minitest::Spec
 
     assert_session ctx, **session_static_options, session_updated: nil
 
+  #@ refresh session
+    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Client::Connect, [{session: ctx[:session], now: DateTime.now + 60*60*24}, {}])
 
+    assert_session ctx, **session_static_options, session_updated: true
   end
 end

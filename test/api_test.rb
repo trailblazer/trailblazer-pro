@@ -1,6 +1,8 @@
 require "test_helper"
 
 class ApiTest < Minitest::Spec
+  after { `rm -r test/imported_json/*json` }
+
   it "we can import a collaboration in our PRO JSON format" do
     Trailblazer::Pro.initialize!(api_key: api_key, trailblazer_pro_host: trailblazer_pro_host)
 

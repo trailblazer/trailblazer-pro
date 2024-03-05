@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 source "https://rubygems.org"
 
 # Specify your gem's dependencies in trailblazer-pro.gemspec
@@ -17,3 +15,4 @@ gem "faraday"
 # gem "trailblazer-developer", path: "../trailblazer-developer"
 # gem "trailblazer-operation", path: "../trailblazer-operation"
 # gem "trailblazer-operation"
+# gem "trailblazer-activity-dsl-linear", path: "../trailblazer-activity-dsl-linear"

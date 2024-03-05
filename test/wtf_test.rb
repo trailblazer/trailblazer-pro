@@ -51,7 +51,7 @@ class WtfTest < Minitest::Spec
 
   #@ simulate time out, new token required.
     signal, (ctx, _), _, output, (session_3, trace_id_3, debugger_url_3, _trace_envelope) =
-      Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}], present_options: {now: DateTime.now + (60 * 100)})
+      Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}], present_options: {now: DateTime.now + (60 * 1000)})
 
     assert_equal trace_id_3.size, 20
     assert_equal debugger_url_3, "https://ide.trailblazer.to/#{trace_id_3}"

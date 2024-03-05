@@ -1,7 +1,7 @@
 require "test_helper"
 
 class ApiTest < Minitest::Spec
-  after { `rm -r test/imported_json/*json` }
+  after { `rm tmp/b0f945.json` }
 
   it "we can import a collaboration in our PRO JSON format" do
     Trailblazer::Pro.initialize!(api_key: api_key, trailblazer_pro_host: trailblazer_pro_host)
@@ -20,6 +20,8 @@ class ApiTest < Minitest::Spec
       },
       {}
     ])
+
+    assert_equal signal.inspect, %(#<Trailblazer::Activity::End semantic=:success>)
 
     assert_equal File.read("/tmp/b0f945.json"), %({\"id\":3,\"type\":\"collaboration\",\"lanes\":[{\"id\":\"lifecycle\",\"type\":\"lane\",\"elements\":[{\"id\":\"Activity_0dgrwre\",\"label\":\"Create\",\"type\":\"task\",\"data\":{},\"links\":[{\"target_id\":\"throw-after-Activity_0dgrwre\",\"semantic\":\"success\"}]},{\"id\":\"catch-before-Activity_0dgrwre\",\"label\":null,\"type\":\"catch_event\",\"data\":{\"start_task\":true},\"links\":[{\"target_id\":\"Activity_0dgrwre\",\"semantic\":\"success\"}]},{\"id\":\"throw-after-Activity_0dgrwre\",\"label\":null,\"type\":\"throw_event\",\"data\":{},\"links\":[]},{\"id\":\"suspend-gw-to-catch-before-Activity_0dgrwre\",\"label\":null,\"type\":\"suspend\",\"data\":{\"resumes\":[\"catch-before-Activity_0dgrwre\"]},\"links\":[]}]}],\"messages\":[]}) # a particular eloquent diagram.
   end

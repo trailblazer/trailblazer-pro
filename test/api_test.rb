@@ -39,11 +39,22 @@ class ApiTest < Minitest::Spec
 
     # TODO: use endpoint to run, and 404, 401 paths
     assert_equal signal.inspect, %(#<Trailblazer::Activity::End semantic=:failure>)
+    assert_equal ctx[:error_message], %(Diagram "xxxfff" couldn't be retrieved. HTTP status: 401)
 
     assert_equal File.exist?("test/imported_json/xxxfff.json"), false
   end
 
   it "401 unauthorized because wrong token" do
+    Trailblazer::Pro.initialize!(api_key: "XXX api_key", trailblazer_pro_host: trailblazer_pro_host)
 
+    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Editor::Import, [{
+        diagram_slug: "b0f945",
+        target_filename: "test/imported_json/b0f945.json",
+        session: Trailblazer::Pro::Session.session
+      },
+      {}
+    ])
+
+    assert_equal ctx[:error_message], %(Custom token couldn't be retrieved. HTTP status: 401)
   end
 end

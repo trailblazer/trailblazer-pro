@@ -21,6 +21,7 @@ module Trailblazer
           Output(:failure) => Path(track_color: :signin, connect_to: Track(:rebuild)) do # FIXME: move to after {valid?}
             # Signin only consumes {:api_key} and friends and doesn't know about {:session}.
             step Subprocess(Signin),
+              Output(:failure) => Track(:failure), # FIXME: we need Railway() instead of Path(), or something equivalent?
               In() => Client.method(:session_to_args)#,
               # Out() => Trace::Signin::SESSION_VARIABLE_NAMES
           end
@@ -31,6 +32,8 @@ module Trailblazer
           end
 
         step :rebuild_session, magnetic_to: :rebuild # TODO: assert that success/failure go to right Track.
+
+        fail :render_error
 
         def session_signedin?(ctx, session:, **)
           session.is_a?(Session)
@@ -46,6 +49,12 @@ module Trailblazer
 
           ctx[:session] = session
           ctx[:session_updated] = true
+        end
+
+        # DISCUSS: do we want a beautiful debugging message here?
+        def render_error(ctx, session:, error_message: nil, **)
+          # raise error_message.inspect
+          true
         end
       end
     end # Client

@@ -68,11 +68,18 @@ module Trailblazer
       end
 
       class Push < Trailblazer::Activity::Railway
-        step Subprocess(Client::Connect) # TODO: assert that success/failure go to right Track.
+        step Subprocess(Client::Connect), # TODO: assert that success/failure go to right Track.
+          Output(:failure) => Track(:failure)
         step Subprocess(Trailblazer::Pro::Trace::Store),
           In() => Client.method(:session_to_args),
           In() => [:data_to_store],
           id: :store
+
+        fail :render_error
+
+        def render_error(ctx, error_message:, **)
+          raise error_message.inspect
+        end
       end # Push
 
       # DISCUSS: who defaults {:now}?

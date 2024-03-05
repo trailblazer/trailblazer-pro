@@ -31,8 +31,12 @@ module Trailblazer::Pro
       now < expires_at
     end
 
+    # DISCUSS: we could expose two failure termini here:
+    #          1. (retrieving custom token failed)
+    #          2. (retrieving id token failed)
     class Signin < Trailblazer::Activity::Railway
       step :request_custom_token
+      fail :error_for_custom_token, Output(:success) => End(:failure)
       step Client.method(:parse_response)
       step :extract_custom_token
       step :extract_data_for_firebase
@@ -94,6 +98,10 @@ module Trailblazer::Pro
 
       def extract_refresh_token(ctx, parsed_response:, **)
         ctx[:refresh_token] = parsed_response["refreshToken"]
+      end
+
+      def error_for_custom_token(ctx, response:, trailblazer_pro_host:, **)
+        ctx[:error_message] = %(Custom token couldn't be retrieved. HTTP status: #{response.status})
       end
     end # Signin
   end

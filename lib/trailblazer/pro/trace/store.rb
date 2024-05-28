@@ -3,16 +3,16 @@ module Trailblazer::Pro
     class Store < Trailblazer::Activity::Railway
       step :upload
       step :extract_id
-      fail :error
+      fail :http_error
 
-      def upload(ctx, firebase_upload_url:, data_to_store:, id_token:, firestore_fields_template:, **)
+      def upload(ctx, http: Faraday, firebase_upload_url:, data_to_store:, id_token:, firestore_fields_template:, **)
         fields = data_to_store[:fields].merge(firestore_fields_template)
 
         json_to_store = JSON.dump(data_to_store.merge(fields: fields))#.to_json
 
         # puts "@@@@@ DATA SIZE: #{json_to_store.size / 1024} kb"
 
-        ctx[:response] = Faraday.post(
+        ctx[:response] = http.post(
           firebase_upload_url,
           json_to_store,
           {'Content-Type'=>'application/json', "Accept": "application/json",
@@ -30,8 +30,8 @@ module Trailblazer::Pro
         ctx[:id]              = ctx[:firestore_name].split("/").last
       end
 
-      def error(ctx, response:, **)
-        puts response.inspect
+      def http_error(ctx, **options)
+        Client.error_message(ctx, message: "Upload failed.", **options)
       end
     end
   end

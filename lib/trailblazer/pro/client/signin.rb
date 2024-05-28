@@ -5,6 +5,14 @@ module Trailblazer::Pro
   module Client
     module_function
 
+    # @semi-public
+    # Canonical method to write an error message after a faile request.
+    def error_message(ctx, message:, response:, **)
+      ctx[:error_message] = %(#{message} HTTP status: #{response.status})
+
+      ctx
+    end
+
     def parse_response(ctx, response:, **)
       ctx[:parsed_response] = JSON.parse(response.body)
     end
@@ -100,8 +108,9 @@ module Trailblazer::Pro
         ctx[:refresh_token] = parsed_response["refreshToken"]
       end
 
-      def error_for_custom_token(ctx, response:, trailblazer_pro_host:, **)
-        ctx[:error_message] = %(Custom token couldn't be retrieved. HTTP status: #{response.status})
+      def error_for_custom_token(ctx, **options)
+        # ctx[:error_message] = %(Custom token couldn't be retrieved. HTTP status: #{response.status})
+        ctx = Client.error_message(ctx, message: %(Custom token couldn't be retrieved.), **options)
       end
     end # Signin
   end

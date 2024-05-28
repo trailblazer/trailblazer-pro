@@ -12,6 +12,7 @@ module Trailblazer
         session.to_h
       end
 
+      # TODO: move to connect.rb
       # session_initialized? --> <> --> valid? --> <> -----------------------------------> (o)
       #                           |                 | --> Refresh --V                       ^
       #                           | --> Signin --------------------->  rebuild_session -->  |
@@ -21,8 +22,10 @@ module Trailblazer
           Output(:failure) => Path(track_color: :signin, connect_to: Track(:rebuild)) do # FIXME: move to after {valid?}
             # Signin only consumes {:api_key} and friends and doesn't know about {:session}.
             step Subprocess(Signin),
+              id: :signin,
               Output(:failure) => Track(:failure), # FIXME: we need Railway() instead of Path(), or something equivalent?
-              In() => Client.method(:session_to_args)#,
+              In() => Client.method(:session_to_args),
+              Inject() => [:http] # DISCUSS: infer this automatically.
               # Out() => Trace::Signin::SESSION_VARIABLE_NAMES
           end
 

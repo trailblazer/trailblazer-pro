@@ -1,8 +1,5 @@
 require "test_helper"
 
-require "trailblazer/test/operation/helper"
-include Trailblazer::Test::Operation::Helper # FIXME: currently not being used!
-
 # unit tests for {Pro::Debugger}
 class DebuggerAPITest < Minitest::Spec
   let(:session_static_options) do

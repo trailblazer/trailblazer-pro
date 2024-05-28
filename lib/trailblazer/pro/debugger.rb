@@ -17,6 +17,11 @@ module Trailblazer
 
         session, stored_trace_id, session_updated = push(trace_envelope, activity: activity, **options)
 
+        if session.nil?
+          output = stored_trace_id
+          return output, []
+        end
+
         debugger_url = "https://ide.trailblazer.to/#{stored_trace_id}"
         # output       = "[TRB PRO] view trace (#{activity}) at #{debugger_url}"
         # output       = Developer::Wtf::Renderer::String.bold(output)
@@ -88,12 +93,14 @@ module Trailblazer
       # DISCUSS: who defaults {:now}?
       def push(trace_data, activity:, now: DateTime.now, **options)
         # signal, (ctx, _) = Trailblazer::Developer.wtf?(Push, [{now: now, data_to_store: trace_data, **options}, {}])
-        _signal, (ctx, _) = Trailblazer::Activity.(Push, {now: now, data_to_store: trace_data, **options})
+        signal, (ctx, _) = Trailblazer::Activity.(Push, {now: now, data_to_store: trace_data, **options})
         # signal, (ctx, _) = Push.invoke([{now: now, data_to_store: trace_data, **options}, {}])
 
         session         = ctx[:session]
         stored_trace_id = ctx[:id]
         session_updated = ctx[:session_updated]
+
+        return [nil, ctx[:error_message]] if signal.to_h[:semantic] == :failure # TODO: what to return?
 
         return session, stored_trace_id, session_updated
       end

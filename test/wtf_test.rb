@@ -116,4 +116,16 @@ class WtfTest < Minitest::Spec
     assert_equal debugger_url, "https://ide.trailblazer.to/#{trace_id}"
     assert_equal Trailblazer::Pro::Session.session, session # session got stored globally
   end
+
+  it "prints error if there's an HTTP issue" do
+    Trailblazer::Pro.initialize!(
+      api_key:              "api_key invalid",
+      trailblazer_pro_host: trailblazer_pro_host,
+      # render_wtf: false,
+    )
+
+    signal, (ctx, _), _, output, (session, trace_id, debugger_url, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
+
+    assert_equal output, %(Custom token couldn't be retrieved. HTTP status: 401)
+  end
 end

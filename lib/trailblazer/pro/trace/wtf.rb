@@ -13,6 +13,8 @@ module Trailblazer::Pro
             .merge(present_options)
             .merge(session: Session.session)
 
+        # We inject our PRO Debugger.call via {:render_method} here.
+        # {Developer::Wtf.invoke} calls {puts}.
         returned = Trailblazer::Developer::Wtf.invoke( # identical to {Developer.wtf?}.
           *args,
           present_options: present_options,

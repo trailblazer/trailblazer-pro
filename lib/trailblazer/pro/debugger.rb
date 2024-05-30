@@ -9,15 +9,8 @@ module Trailblazer
       def call(activity:, render_wtf: false, **options)
         output = ""
 
-        trace_data = render_trace_data(activity: activity, **options)
-
-        trace_envelope = {
-          fields: {
-            activity_name:   {stringValue: activity},
-            trace:  {stringValue: trace_data},
-            created_at: {timestampValue: DateTime.now}, # we're using local client time currently.
-          }
-        }
+        trace_data      = render_trace_data(activity: activity, **options)
+        trace_envelope  = trace_envelope_for(activity: activity, trace_data: trace_data)
 
         session, stored_trace_id, session_updated = push(trace_envelope, activity: activity, **options)
 
@@ -31,11 +24,9 @@ module Trailblazer
           return output, []
         end
 
-        debugger_url = "https://ide.trailblazer.to/#{stored_trace_id}"
-        # output       = "[TRB PRO] view trace (#{activity}) at #{debugger_url}"
-        # output       = Developer::Wtf::Renderer::String.bold(output)
-        output += Developer::Wtf::Renderer::String.bold("[TRB PRO] view trace (#{activity}) at ")
-        output += debugger_url # DISCUSS: what do we want bold here?
+        debugger_link, debugger_url = render_debugger_link(stored_trace_id: stored_trace_id, activity: activity)
+
+        output += debugger_link
 
         returned_values = [session, stored_trace_id, debugger_url, trace_envelope, session_updated]
 
@@ -74,11 +65,31 @@ module Trailblazer
         )
       end
 
+      def trace_envelope_for(activity:, trace_data:)
+        {
+          fields: {
+            activity_name:   {stringValue: activity},
+            trace:  {stringValue: trace_data},
+            created_at: {timestampValue: DateTime.now}, # we're using local client time currently.
+          }
+        }
+      end
+
       def render_original_wtf_trace(debugger_trace:, renderer:, color_map: Developer::Wtf::Renderer::DEFAULT_COLOR_MAP, **)
         # TODO: take the color_map from outside caller.
         wtf_output = Developer::Trace::Present.render(debugger_trace: debugger_trace, renderer: renderer, color_map: Developer::Wtf::Renderer::DEFAULT_COLOR_MAP) # , activity: activity
 
         output = [wtf_output, output].join("\n")
+      end
+
+      def render_debugger_link(stored_trace_id:, activity:)
+        debugger_url = "https://ide.trailblazer.to/#{stored_trace_id}"
+        # output       = "[TRB PRO] view trace (#{activity}) at #{debugger_url}"
+        # output       = Developer::Wtf::Renderer::String.bold(output)
+        link = Developer::Wtf::Renderer::String.bold("[TRB PRO] view trace (#{activity}) at ")
+        link += debugger_url # DISCUSS: what do we want bold here?
+
+        return link, debugger_url
       end
 
       class Push < Trailblazer::Activity::Railway

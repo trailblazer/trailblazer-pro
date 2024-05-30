@@ -126,6 +126,10 @@ class WtfTest < Minitest::Spec
 
     signal, (ctx, _), _, output, (session, trace_id, debugger_url, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
 
-    assert_equal output, %(Custom token couldn't be retrieved. HTTP status: 401)
+    assert_equal output, %(WtfTest::Create
+|-- \e[32mStart.default\e[0m
+|-- \e[32mmodel\e[0m
+`-- End.success
+Custom token couldn't be retrieved. HTTP status: 401)
   end
 end

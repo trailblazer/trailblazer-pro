@@ -4,8 +4,12 @@ module Trailblazer
       module_function
 
       # Called in {Trace::Present.call} as {:render_method}.
-      def call(debugger_trace:, activity:, render_wtf: false, renderer:, **options)
-        trace_data = render_trace_data(debugger_trace, activity: activity, **options)
+      # This method always returns [output, *], where {output}
+      # is an arbitrary string to be written to the logger or CLI.
+      def call(activity:, render_wtf: false, **options)
+        output = ""
+
+        trace_data = render_trace_data(activity: activity, **options)
 
         trace_envelope = {
           fields: {
@@ -17,30 +21,28 @@ module Trailblazer
 
         session, stored_trace_id, session_updated = push(trace_envelope, activity: activity, **options)
 
+        if render_wtf
+          output += render_original_wtf_trace(**options)
+        end
+
+        # This block covers when something in {push} above went wrong.
         if session.nil?
-          output = stored_trace_id
+          output += stored_trace_id
           return output, []
         end
 
         debugger_url = "https://ide.trailblazer.to/#{stored_trace_id}"
         # output       = "[TRB PRO] view trace (#{activity}) at #{debugger_url}"
         # output       = Developer::Wtf::Renderer::String.bold(output)
-        output       = Developer::Wtf::Renderer::String.bold("[TRB PRO] view trace (#{activity}) at ")
+        output += Developer::Wtf::Renderer::String.bold("[TRB PRO] view trace (#{activity}) at ")
         output += debugger_url # DISCUSS: what do we want bold here?
-
-        if render_wtf
-          # TODO: take the color_map from outside caller.
-          wtf_output = Developer::Trace::Present.render(debugger_trace: debugger_trace, renderer: renderer, color_map: Developer::Wtf::Renderer::DEFAULT_COLOR_MAP) # , activity: activity
-
-          output = [wtf_output, output].join("\n")
-        end
 
         returned_values = [session, stored_trace_id, debugger_url, trace_envelope, session_updated]
 
         return output, returned_values
       end
 
-      def render_trace_data(debugger_trace, activity:, **)
+      def render_trace_data(debugger_trace:, activity:, **)
         flat_tree_json = debugger_trace.to_a.collect do |debugger_node|
 
           # TODO: do we even need to grab tw by path here?
@@ -70,6 +72,13 @@ module Trailblazer
           variable_versions:  debugger_trace.to_h[:variable_versions].to_h,
           pro_version: Pro::VERSION.to_s,
         )
+      end
+
+      def render_original_wtf_trace(debugger_trace:, renderer:, color_map: Developer::Wtf::Renderer::DEFAULT_COLOR_MAP, **)
+        # TODO: take the color_map from outside caller.
+        wtf_output = Developer::Trace::Present.render(debugger_trace: debugger_trace, renderer: renderer, color_map: Developer::Wtf::Renderer::DEFAULT_COLOR_MAP) # , activity: activity
+
+        output = [wtf_output, output].join("\n")
       end
 
       class Push < Trailblazer::Activity::Railway

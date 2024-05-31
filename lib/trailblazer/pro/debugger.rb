@@ -1,39 +1,32 @@
 module Trailblazer
   module Pro
-    module Debugger
-      module_function
+    # Called in {Trace::Present.call} as {:render_method}.
+    # This method always returns [output, *], where {output}
+    # is an arbitrary string to be written to the logger or CLI.
+    def self.invoke_debugger(**kws)
+      _, (ctx, _) = Activity::TaskWrap.invoke(Debugger, [{now: DateTime.now, **kws, output: []}, {}])
 
-      # Called in {Trace::Present.call} as {:render_method}.
-      # This method always returns [output, *], where {output}
-      # is an arbitrary string to be written to the logger or CLI.
-      def call(activity:, render_wtf: false, **options)
-        output = ""
+      return ctx[:output], [ctx[:session], ctx[:id], ctx[:debugger_url], ctx[:data_to_store], ctx[:session_updated]]
+    end
 
-        trace_data      = render_trace_data(activity: activity, **options)
-        trace_envelope  = trace_envelope_for(activity: activity, trace_data: trace_data)
+    # This is the {:render_method} implementation (for Trace::Present)
+    # when using PRO's wtf.
+    class Debugger < Trailblazer::Activity::Railway
+      step :render_trace_data
+      step :trace_envelope_for
+      step Subprocess(Push)
+      step :render_original_wtf_trace
+      fail :render_original_wtf_trace, id: "fail.render_original_wtf_trace"
+      fail :trace_with_appended_error_message
+      step :render_debugger_link
+      step :compile_output
+      fail :compile_output, id: "fail.compile_output"
 
-        session, stored_trace_id, session_updated = push(trace_envelope, activity: activity, **options)
-
-        if render_wtf
-          output += render_original_wtf_trace(**options)
-        end
-
-        # This block covers when something in {push} above went wrong.
-        if session.nil?
-          output += stored_trace_id
-          return output, []
-        end
-
-        debugger_link, debugger_url = render_debugger_link(stored_trace_id: stored_trace_id, activity: activity)
-
-        output += debugger_link
-
-        returned_values = [session, stored_trace_id, debugger_url, trace_envelope, session_updated]
-
-        return output, returned_values
+      def trace_with_appended_error_message(ctx, error_message:, output:, **)
+        ctx[:output] << error_message
       end
 
-      def render_trace_data(debugger_trace:, activity:, **)
+      def render_trace_data(ctx, debugger_trace:, activity:, **)
         flat_tree_json = debugger_trace.to_a.collect do |debugger_node|
 
           # TODO: do we even need to grab tw by path here?
@@ -41,7 +34,7 @@ module Trailblazer
           tw_render = Developer::Render::TaskWrap.render_for(debugger_node.activity, introspect_nodes_node)
 
           # This rendering code has deep knowledge of Trace/pro/v1 tracing interface.
-          {
+          ctx[:trace_data] = {
             id:             debugger_node.id.to_s,
             runtime_id:     debugger_node.runtime_id,
             level:          debugger_node.level,
@@ -58,15 +51,15 @@ module Trailblazer
           }
         end
 
-        JSON.dump(
+        ctx[:trace_data] = JSON.dump(
           nodes:              flat_tree_json,
           variable_versions:  debugger_trace.to_h[:variable_versions].to_h,
           pro_version: Pro::VERSION.to_s,
         )
       end
 
-      def trace_envelope_for(activity:, trace_data:)
-        {
+      def trace_envelope_for(ctx, activity:, trace_data:, **)
+        ctx[:data_to_store] = {
           fields: {
             activity_name:   {stringValue: activity},
             trace:  {stringValue: trace_data},
@@ -75,36 +68,30 @@ module Trailblazer
         }
       end
 
-      def render_original_wtf_trace(debugger_trace:, renderer:, color_map: Developer::Wtf::Renderer::DEFAULT_COLOR_MAP, **)
+      def render_original_wtf_trace(ctx, render_wtf: false, debugger_trace:, renderer:, output:, color_map: Developer::Wtf::Renderer::DEFAULT_COLOR_MAP, **)
+        return true unless render_wtf
         # TODO: take the color_map from outside caller.
         wtf_output = Developer::Trace::Present.render(debugger_trace: debugger_trace, renderer: renderer, color_map: Developer::Wtf::Renderer::DEFAULT_COLOR_MAP) # , activity: activity
 
-        output = [wtf_output, output].join("\n")
+        ctx[:output] << wtf_output
       end
 
-      def render_debugger_link(stored_trace_id:, activity:)
-        debugger_url = "https://ide.trailblazer.to/#{stored_trace_id}"
+      # :id is :stored_trace_id.
+      def render_debugger_link(ctx, id:, activity:, **)
+        debugger_url = "https://ide.trailblazer.to/#{id}"
         # output       = "[TRB PRO] view trace (#{activity}) at #{debugger_url}"
         # output       = Developer::Wtf::Renderer::String.bold(output)
         link = Developer::Wtf::Renderer::String.bold("[TRB PRO] view trace (#{activity}) at ")
         link += debugger_url # DISCUSS: what do we want bold here?
 
-        return link, debugger_url
+        ctx[:link] = link
+        ctx[:debugger_url] = debugger_url
+
+        ctx[:output] << link
       end
 
-      # DISCUSS: who defaults {:now}?
-      def push(trace_data, activity:, now: DateTime.now, **options)
-        # signal, (ctx, _) = Trailblazer::Developer.wtf?(Push, [{now: now, data_to_store: trace_data, **options}, {}])
-        signal, (ctx, _) = Trailblazer::Activity.(Push, {now: now, data_to_store: trace_data, **options})
-        # signal, (ctx, _) = Push.invoke([{now: now, data_to_store: trace_data, **options}, {}])
-
-        session         = ctx[:session]
-        stored_trace_id = ctx[:id]
-        session_updated = ctx[:session_updated]
-
-        return [nil, ctx[:error_message]] if signal.to_h[:semantic] == :failure # TODO: what to return?
-
-        return session, stored_trace_id, session_updated
+      def compile_output(ctx, output:, **)
+        ctx[:output] = output.join("\n")
       end
     end # Debugger
   end

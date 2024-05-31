@@ -1,6 +1,6 @@
 module Trailblazer
   module Pro
-    module Debugger
+    class Debugger < Trailblazer::Activity::Railway
       class Push < Trailblazer::Activity::Railway
         step Subprocess(Client::Connect), # TODO: assert that success/failure go to right Track.
           Output(:failure) => Track(:failure),

@@ -114,4 +114,45 @@ class DebuggerAPITest < Minitest::Spec
     assert_equal ctx[:error_message], %(Custom token couldn't be retrieved. HTTP status: 502)
     assert_equal ctx[:session].trailblazer_pro_host, "https://testbackend-pro.trb.to"
   end
+
+  it "what" do
+    class Create < Trailblazer::Activity::Railway
+      step :model
+
+      def model(ctx, **)
+        ctx[:model] = Object.new
+      end
+    end
+
+    Trailblazer::Pro.initialize!(api_key: api_key, trailblazer_pro_host: trailblazer_pro_host)
+
+    # Compute a {Debugger::Trace} using the normal {Wtf} and {Trace::Present} logic.
+    signal, (ctx, flow_options), circuit_options, output, returned_args = Trailblazer::Developer.wtf?(
+      Create,
+      [{}, {}],
+      present_options: {
+        render_method: ->(debugger_trace:, **) { ["i am the output", debugger_trace] }, # whatever we return from {:render_method} is available as {returned_args}
+      },
+    )
+
+    debugger_trace = returned_args
+
+    # NOTE: this tests private internals and hence looks a bit clumsy (especially retrieving the {debugger_trace}).
+    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Debugger, [
+      {
+        debugger_trace: debugger_trace,
+        activity: Create,
+        renderer: Trailblazer::Developer::Trace::Present.method(:default_renderer),
+
+        output: [],
+        session: Trailblazer::Pro::Session.session,
+        # http: stubbed_http,
+        # data_to_store: {fields: {a: 1}},
+        # firestore_fields_template: session_static_options[:firestore_fields_template],
+      }, {}])
+
+    assert_equal ctx[:session].class, Trailblazer::Pro::Session # initialized session.
+    assert_equal ctx[:session_updated], true
+    assert_equal ctx[:id].size, 20
+  end
 end

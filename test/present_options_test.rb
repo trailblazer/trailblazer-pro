@@ -17,7 +17,7 @@ class PresentOptionsTest < Minitest::Spec
     signal, (ctx, _), _, output, (token, trace_id, debugger_url, trace_envelope) = Trailblazer::Developer.wtf?(
       Create,
       [ctx, {}],
-      present_options: {render_method: Trailblazer::Pro::Debugger, session: uninitialized_session, render_wtf: true}, # FIXME:  why do we have to pass {:session} here?
+      present_options: {render_method: Trailblazer::Pro.method(:invoke_debugger), session: uninitialized_session, render_wtf: true}, # FIXME:  why do we have to pass {:session} here?
     )
 
     assert_equal output, %(PresentOptionsTest::Create
@@ -33,7 +33,7 @@ class PresentOptionsTest < Minitest::Spec
     signal, (ctx, _), _, output, (token, trace_id, debugger_url, trace_envelope) = Trailblazer::Developer.wtf?(
       Create,
       [ctx, {}],
-      present_options: {render_method: Trailblazer::Pro::Debugger, session: uninitialized_session, render_wtf: false}, # FIXME:  why do we have to pass {:session} here?
+      present_options: {render_method: Trailblazer::Pro.method(:invoke_debugger), session: uninitialized_session, render_wtf: false}, # FIXME:  why do we have to pass {:session} here?
     )
 
     assert_equal output, %(\e[1m[TRB PRO] view trace (PresentOptionsTest::Create) at \e[22mhttps://ide.trailblazer.to/#{trace_id})
@@ -46,7 +46,7 @@ class PresentOptionsTest < Minitest::Spec
     signal, (ctx, _), _, output, (token, trace_id, debugger_url, trace_envelope) = Trailblazer::Developer.wtf?(
       Create,
       [ctx, {}],
-      present_options: {render_method: Trailblazer::Pro::Debugger, session: uninitialized_session},
+      present_options: {render_method: Trailblazer::Pro.method(:invoke_debugger), session: uninitialized_session},
     )
 
     assert_equal trace_id.size, 20

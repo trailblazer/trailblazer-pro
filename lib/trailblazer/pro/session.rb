@@ -37,7 +37,8 @@ module Trailblazer
     #   pass session, e.g. from RAils/tmp
     def self.initialize!(api_key:, id_token: nil, render_wtf: true, **options)
       Session.wtf_present_options = {
-        render_method:  Trailblazer::Pro::Debugger,
+        # render_method:  Trailblazer::Pro::Debugger,
+        render_method:  Trailblazer::Pro.method(:invoke_debugger),
         render_wtf:     render_wtf,
         # api_key:        api_key,
         # **options

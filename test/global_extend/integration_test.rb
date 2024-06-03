@@ -15,7 +15,7 @@ class IntegrationTest < Minitest::Spec
     Trailblazer::Pro::Session.trace_guards = Trailblazer::Pro::Trace::Decision.new(
       [
         ->(activity, *) { activity == Create ? [Trailblazer::Pro::Trace::Wtf, {render_wtf: true}] : false }, # false means "call super"
-        ->(activity, ctx) { activity == Trailblazer::Pro::Debugger::Push && ctx[:data_to_store][:fields][:activity_name][:stringValue] == IntegrationTest::Create ? [Trailblazer::Developer::Wtf, {}] : false }, # false means "call super"
+        ->(activity, ctx) { activity == Trailblazer::Pro::Debugger && ctx[:activity] == IntegrationTest::Create ? [Trailblazer::Developer::Wtf, {}] : false }, # false means "call super"
       ]
     )
 
@@ -33,7 +33,7 @@ class IntegrationTest < Minitest::Spec
     cli_wtf_last_line = lines.find { |line| line == "`-- End.success" }
     wtf_last_line_index = lines.index(cli_wtf_last_line)
 
-    assert_equal lines[0], "Trailblazer::Pro::Debugger::Push"       # beginning of {Push} CLI trace
+    assert_equal lines[0], "Trailblazer::Pro::Debugger"       # beginning of {Push} CLI trace
 
     trace_id = lines[-1][-20..-1]
 

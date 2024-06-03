@@ -21,7 +21,8 @@ class ActivityCallTest < Minitest::Spec
     Trailblazer::Pro::Session.trace_guards = Trailblazer::Pro::Trace::Decision.new(
       [
         ->(activity, *) { activity == ActivityCallTest::Create ? [Trailblazer::Pro::Trace::Wtf, {render_wtf: true}] : false }, # false means "call super"
-        ->(activity, ctx) { activity == Trailblazer::Pro::Debugger::Push && ctx[:data_to_store][:fields][:activity_name][:stringValue] == ActivityCallTest::Create ? [Trailblazer::Developer::Wtf, {}] : false }, # false means "call super"
+        # NOTE: ctx[:activity] is not the same as the positional {activity} argument but the "debugged" activity.
+        ->(activity, ctx) { activity == Trailblazer::Pro::Debugger && ctx[:activity] == ActivityCallTest::Create ? [Trailblazer::Developer::Wtf, {}] : false }, # false means "call super"
       ]
     )
 
@@ -32,14 +33,14 @@ class ActivityCallTest < Minitest::Spec
       signal, (ctx, _) = ::Trailblazer::Activity.(Create, {params: {}})
     end
 
-    # 1. Push is traced on CLI
+    # 1. Debugger is traced on CLI
     # 2. Create is CLI and web.
 
     lines = output.split("\n")
     cli_wtf_last_line = lines.find { |line| line == "`-- End.success" }
     wtf_last_line_index = lines.index(cli_wtf_last_line)
 
-    assert_equal lines[0], "Trailblazer::Pro::Debugger::Push"       # beginning of {Push} CLI trace
+    assert_equal lines[0], "Trailblazer::Pro::Debugger"       # beginning of {Debugger/Push} CLI trace
 
     trace_id = lines[-1][-20..-1]
 

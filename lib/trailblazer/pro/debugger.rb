@@ -6,7 +6,7 @@ module Trailblazer
     def self.invoke_debugger(**kws)
       _, (ctx, _) = Activity::TaskWrap.invoke(Debugger, [{now: DateTime.now, **kws, output: []}, {}])
 
-      return ctx[:output], [ctx[:session], ctx[:id], ctx[:debugger_url], ctx[:data_to_store], ctx[:session_updated]]
+      return ctx[:output], ctx#[:session], ctx[:id], ctx[:debugger_url], ctx[:data_to_store], ctx[:session_updated]]
     end
 
     # This is the {:render_method} implementation (for Trace::Present)

@@ -115,7 +115,7 @@ class DebuggerAPITest < Minitest::Spec
     assert_equal ctx[:session].trailblazer_pro_host, "https://testbackend-pro.trb.to"
   end
 
-  it "what" do
+  it "{Pro.invoke_debugger}" do
     class Create < Trailblazer::Activity::Railway
       step :model
 
@@ -138,8 +138,9 @@ class DebuggerAPITest < Minitest::Spec
     debugger_trace = returned_args
 
     # NOTE: this tests private internals and hence looks a bit clumsy (especially retrieving the {debugger_trace}).
-    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Debugger, [
-      {
+    # signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Debugger, [
+    output, ctx = Trailblazer::Pro.invoke_debugger(
+      **{
         debugger_trace: debugger_trace,
         activity: Create,
         renderer: Trailblazer::Developer::Trace::Present.method(:default_renderer),
@@ -149,7 +150,10 @@ class DebuggerAPITest < Minitest::Spec
         # http: stubbed_http,
         # data_to_store: {fields: {a: 1}},
         # firestore_fields_template: session_static_options[:firestore_fields_template],
-      }, {}])
+      }
+    )
+
+    assert_equal output.split(".to")[0], %(\e[1m[TRB PRO] view trace (DebuggerAPITest::Create) at \e[22mhttps://ide.trailblazer)
 
     assert_equal ctx[:session].class, Trailblazer::Pro::Session # initialized session.
     assert_equal ctx[:session_updated], true

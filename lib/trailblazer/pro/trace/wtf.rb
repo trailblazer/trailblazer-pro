@@ -21,7 +21,9 @@ module Trailblazer::Pro
           **options
         )
 
-        (session, _trace_id, _debugger_url, _trace_envelope, session_updated) = returned[-1]
+        returned_ctx = returned[-1]
+
+        session, session_updated = returned_ctx[:session], returned_ctx[:session_updated]
 
         update_session!(session) if session_updated # DISCUSS: this is a hook for pro-rails, not a massive fan.
 

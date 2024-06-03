@@ -28,8 +28,11 @@ class WtfTest < Minitest::Spec
   # Uninitialized session.
     assert_equal Trailblazer::Pro::Session.session.to_h, {api_key: api_key, trailblazer_pro_host: trailblazer_pro_host}
 
-    signal, (ctx, _), _, output, (session, trace_id, debugger_url, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
+    signal, (ctx, _), _, output, returned_ctx = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
 
+    trace_id = returned_ctx[:id]
+    session = returned_ctx[:session]
+    debugger_url = returned_ctx[:debugger_url]
 
     assert_equal trace_id.size, 20
     assert_equal debugger_url, "https://ide.trailblazer.to/#{trace_id}"
@@ -38,7 +41,11 @@ class WtfTest < Minitest::Spec
     session_1_hash = assert_session({session: session}, **session_static_options)
 
   #@ while session is valid, do another call.
-    signal, (ctx, _), _, output, (session_2, trace_id_2, debugger_url_2, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}])
+    signal, (ctx, _), _, output, returned_ctx_2 = Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}])
+
+    trace_id_2 = returned_ctx_2[:id]
+    session_2 = returned_ctx_2[:session]
+    debugger_url_2 = returned_ctx_2[:debugger_url]
 
     assert_equal trace_id_2.size, 20
     assert_equal debugger_url_2, "https://ide.trailblazer.to/#{trace_id_2}"
@@ -50,8 +57,12 @@ class WtfTest < Minitest::Spec
     assert_equal session_1_hash[:id_token], session_2_hash[:id_token]
 
   #@ simulate time out, new token required.
-    signal, (ctx, _), _, output, (session_3, trace_id_3, debugger_url_3, _trace_envelope) =
+    signal, (ctx, _), _, output, returned_ctx_3 =
       Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}], present_options: {now: DateTime.now + (60 * 1000)})
+
+    trace_id_3 = returned_ctx_3[:id]
+    session_3 = returned_ctx_3[:session]
+    debugger_url_3 = returned_ctx_3[:debugger_url]
 
     assert_equal trace_id_3.size, 20
     assert_equal debugger_url_3, "https://ide.trailblazer.to/#{trace_id_3}"
@@ -73,7 +84,11 @@ class WtfTest < Minitest::Spec
 
     Trailblazer::Pro.initialize!(**session_4)
 
-    signal, (ctx, _), _, output, (session_5, trace_id_5, debugger_url_5, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}])
+    signal, (ctx, _), _, output, returned_ctx_5 = Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}])
+
+    trace_id_5 = returned_ctx_5[:id]
+    session_5 = returned_ctx_5[:session]
+    debugger_url_5 = returned_ctx_5[:debugger_url]
 
     assert_equal trace_id_5.size, 20
     assert_equal debugger_url_5, "https://ide.trailblazer.to/#{trace_id_5}"
@@ -91,7 +106,11 @@ class WtfTest < Minitest::Spec
       render_wtf: false,
     )
 
-    signal, (ctx, _), _, output, (session, trace_id, debugger_url, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
+    signal, (ctx, _), _, output, returned_ctx = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
+
+    trace_id = returned_ctx[:id]
+    session = returned_ctx[:session]
+    debugger_url = returned_ctx[:debugger_url]
 
     assert_equal output, %(\e[1m[TRB PRO] view trace (WtfTest::Create) at \e[22mhttps://ide.trailblazer.to/#{trace_id})
     assert_equal trace_id.size, 20
@@ -105,7 +124,11 @@ class WtfTest < Minitest::Spec
       render_wtf: true,
     )
 
-    signal, (ctx, _), _, output, (session, trace_id, debugger_url, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
+    signal, (ctx, _), _, output, returned_ctx = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
+
+    trace_id = returned_ctx[:id]
+    session = returned_ctx[:session]
+    debugger_url = returned_ctx[:debugger_url]
 
     assert_equal output, %(WtfTest::Create
 |-- \e[32mStart.default\e[0m
@@ -124,7 +147,7 @@ class WtfTest < Minitest::Spec
       # render_wtf: false,
     )
 
-    signal, (ctx, _), _, output, (session, trace_id, debugger_url, _trace_envelope) = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
+    signal, (ctx, _), _, output, _returned_ctx = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
 
     assert_equal output, %(WtfTest::Create
 |-- \e[32mStart.default\e[0m

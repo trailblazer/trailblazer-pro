@@ -14,7 +14,7 @@ class PresentOptionsTest < Minitest::Spec
   it "with {render_wtf: true}" do
     ctx = {}
 
-    signal, (ctx, _), _, output, (token, trace_id, debugger_url, trace_envelope) = Trailblazer::Developer.wtf?(
+    signal, (ctx, _), _, output, returned_ctx = Trailblazer::Developer.wtf?(
       Create,
       [ctx, {}],
       present_options: {render_method: Trailblazer::Pro.method(:invoke_debugger), session: uninitialized_session, render_wtf: true}, # FIXME:  why do we have to pass {:session} here?
@@ -24,34 +24,35 @@ class PresentOptionsTest < Minitest::Spec
 |-- \e[32mStart.default\e[0m
 |-- \e[32mmodel\e[0m
 `-- End.success
-\e[1m[TRB PRO] view trace (PresentOptionsTest::Create) at \e[22mhttps://ide.trailblazer.to/#{trace_id})
+\e[1m[TRB PRO] view trace (PresentOptionsTest::Create) at \e[22mhttps://ide.trailblazer.to/#{returned_ctx[:id]})
   end
 
   it "with {render_wtf: false}" do
     ctx = {}
 
-    signal, (ctx, _), _, output, (token, trace_id, debugger_url, trace_envelope) = Trailblazer::Developer.wtf?(
+    signal, (ctx, _), _, output, returned_ctx = Trailblazer::Developer.wtf?(
       Create,
       [ctx, {}],
       present_options: {render_method: Trailblazer::Pro.method(:invoke_debugger), session: uninitialized_session, render_wtf: false}, # FIXME:  why do we have to pass {:session} here?
     )
 
-    assert_equal output, %(\e[1m[TRB PRO] view trace (PresentOptionsTest::Create) at \e[22mhttps://ide.trailblazer.to/#{trace_id})
+    assert_equal output, %(\e[1m[TRB PRO] view trace (PresentOptionsTest::Create) at \e[22mhttps://ide.trailblazer.to/#{returned_ctx[:id]})
   end
 
   # test if trace has expected elements
   it "returned trace data is correct" do
     ctx = {}
 
-    signal, (ctx, _), _, output, (token, trace_id, debugger_url, trace_envelope) = Trailblazer::Developer.wtf?(
+    signal, (ctx, _), _, output, returned_ctx = Trailblazer::Developer.wtf?(
       Create,
       [ctx, {}],
       present_options: {render_method: Trailblazer::Pro.method(:invoke_debugger), session: uninitialized_session},
     )
 
-    assert_equal trace_id.size, 20
-    assert_equal debugger_url, "https://ide.trailblazer.to/#{trace_id}"
+    assert_equal returned_ctx[:id].size, 20
+    assert_equal returned_ctx[:debugger_url], "https://ide.trailblazer.to/#{returned_ctx[:id]}"
 
+    trace_envelope = returned_ctx[:data_to_store]
     assert_equal trace_envelope[:fields].keys, [:activity_name, :trace, :created_at]
     assert_equal trace_envelope[:fields][:activity_name], {:stringValue=>PresentOptionsTest::Create}
     assert trace_envelope[:fields][:created_at][:timestampValue] < DateTime.now

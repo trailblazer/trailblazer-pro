@@ -1,6 +1,7 @@
 require_relative "pro/version"
 require "trailblazer/activity/dsl/linear"
 require "faraday"
+require "ostruct"
 
 module Trailblazer
   module Pro

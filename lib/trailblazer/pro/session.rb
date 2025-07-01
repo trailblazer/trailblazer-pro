@@ -69,7 +69,10 @@ module Trailblazer
             operation_hash.collect do |operation, strategy| # DISCUSS: this can be easily made faster for runtime.
               operation.extend(Trailblazer::Pro::Operation::Call) # only extend selected OPs.
 
-              strategy = Trailblazer::Pro::Trace::Wtf if strategy === true # defaulting.
+              # if strategy === true # defaulting.
+              if strategy.is_a?(TrueClass) # defaulting.
+                strategy = Trailblazer::Pro::Trace::Wtf.method(:call)
+              end
 
               ->(activity, *) { activity == operation ? [strategy, {}] : false }
             end

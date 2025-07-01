@@ -24,7 +24,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Uncomment to register a new dependency of your gem
-  spec.add_dependency "trailblazer-activity", ">= 0.17.0", "< 0.18.0"
+  spec.add_dependency "trailblazer-activity", ">= 0.18.0", "< 0.19.0"
+  spec.add_dependency "trailblazer-invoke", ">= 0.0.1", "< 0.1.0"
   spec.add_dependency "trailblazer-developer", ">= 0.1.0", "< 0.2.0"
   spec.add_dependency "jwt"
   spec.add_dependency "faraday"

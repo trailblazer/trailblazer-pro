@@ -2,9 +2,22 @@ module Trailblazer::Pro
   module Trace
     module Wtf
       module_function
-      # DISCUSS: this is called inside the monkey-patch for Activity/Operation.()
-      # in {Pro::Call.call}.
-      def call(*args, present_options: {}, **options)
+
+      def options_for_canonical_invoke
+        adds_for_options_compiler = [
+          [Trailblazer::Invoke::Options::HeuristicMerge.build(method(:options_compiler_step)), id: "pro.wtf", append: nil]
+        ]
+
+        Trailblazer::Developer::Wtf.options_for_canonical_invoke(adds_for_options_compiler: adds_for_options_compiler)
+      end
+
+      def options_compiler_step(*)
+        {
+          invoke_method: method(:invoke)
+        }
+      end
+
+      def invoke(*args, present_options: {}, **options)
         global_present_options =  Session.wtf_present_options
         raise "[Trailblazer] Please configure your PRO API key." if global_present_options.nil?
 
@@ -15,7 +28,19 @@ module Trailblazer::Pro
 
         # We inject our PRO Debugger.call via {:render_method} here.
         # {Developer::Wtf.invoke} calls {puts}.
-        returned = Trailblazer::Developer::Wtf.invoke( # identical to {Developer.wtf?}.
+
+
+=begin
+def wtf_adds(*)
+      {
+        invoke_method: Trailblazer::Developer::Wtf.method(:invoke_with_rescue),
+      }
+    end
+=end
+
+
+
+        returned = Trailblazer::Developer::Wtf.invoke_with_rescue(
           *args,
           present_options: present_options,
           **options
@@ -28,10 +53,6 @@ module Trailblazer::Pro
         update_session!(session) if session_updated # DISCUSS: this is a hook for pro-rails, not a massive fan.
 
         returned
-      end
-
-      class << self
-        alias invoke call
       end
 
       def update_session!(session)

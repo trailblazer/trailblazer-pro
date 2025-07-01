@@ -7,6 +7,7 @@ module Trailblazer
         # or if we should bypass tracing.
         def call(activity, ctx)
           trace_strategy, present_options_merge = Pro::Session.trace_guards.(activity, ctx)
+          puts "@@@@@ #{present_options_merge.inspect}"
 
           if trace_strategy
             return trace_strategy.invoke(activity, [ctx, {}], present_options: present_options_merge)

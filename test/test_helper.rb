@@ -63,6 +63,3 @@ class Minitest::Spec::Create < Trailblazer::Operation
     ctx[:model] = Object.new
   end
 end
-
-require "trailblazer/developer" # FIXME.
-

@@ -34,7 +34,7 @@ module Trailblazer::Pro
 
     def valid?(ctx, now:, expires_at:, **)
 # FIXME
-      puts "id_token expires at #{expires_at}, that is in #{((expires_at - now) * 24 * 60 * 60).to_i} seconds"
+      # puts "id_token expires at #{expires_at}, that is in #{((expires_at - now) * 24 * 60 * 60).to_i} seconds"
 
       now < expires_at
     end

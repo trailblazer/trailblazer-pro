@@ -52,30 +52,21 @@ module Trailblazer
       end
     end
 
-    def self.trace_operations!(operation_hash)
-      Trailblazer::Pro::Session.trace_guards = DSL.trace_operations(operation_hash)
+    def self.trace_operations!(*args)
+      Trailblazer::Pro::Session.trace_guards = DSL.trace_operations(*args)
     end
 
     module DSL
       module_function
 
-      def trace_operations(operation_hash)
+      def trace_operations(*operations)
         decisions =
-          if operation_hash == :all
-            Trailblazer::Operation.extend(Trailblazer::Pro::Operation::Call)
-
+          if operations == :all
             raise "implement me"
-          elsif operation_hash.is_a?(Hash)
-            operation_hash.collect do |operation, strategy| # DISCUSS: this can be easily made faster for runtime.
-              operation.extend(Trailblazer::Pro::Operation::Call) # only extend selected OPs.
-
-              # if strategy === true # defaulting.
-              if strategy.is_a?(TrueClass) # defaulting.
-                strategy = Trailblazer::Pro::Trace::Wtf.method(:call)
-              end
-
-              ->(activity, *) { activity == operation ? [strategy, {}] : false }
-            end
+          elsif operations.is_a?(Array)
+            [
+              ->(activity, *) { operations.include?(activity) }
+            ]
           else
             []
           end

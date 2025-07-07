@@ -23,7 +23,7 @@ class OperationTest < Minitest::Spec
     assert_cli_trace(output, operation: operation)
   end
 
-  it "" do
+  it "we can set {trace_guards}" do
     operation = Class.new(Create)
 
     Trailblazer::Pro.initialize!(api_key: api_key, trailblazer_pro_host: trailblazer_pro_host)

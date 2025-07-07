@@ -16,17 +16,17 @@ class ClientTest < Minitest::Spec
   #@ Uninitialized sigin
     initial_session = Trailblazer::Pro::Session::Uninitialized.new(trailblazer_pro_host: trailblazer_pro_host, api_key: api_key)
 
-    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Client::Connect, [{session: initial_session}, {}])
+    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Client::Connect, {session: initial_session})
 
     assert_session ctx, **session_static_options, session_updated: true
 
   #@ reuse still valid session
-    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Client::Connect, [{session: ctx[:session], now: DateTime.now}, {}])
+    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Client::Connect, {session: ctx[:session], now: DateTime.now})
 
     assert_session ctx, **session_static_options, session_updated: nil
 
   #@ refresh session
-    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Client::Connect, [{session: ctx[:session], now: DateTime.now + 60*60*24}, {}])
+    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Client::Connect, {session: ctx[:session], now: DateTime.now + 60*60*24})
 
     assert_session ctx, **session_static_options, session_updated: true
   end
@@ -34,7 +34,7 @@ class ClientTest < Minitest::Spec
   it "Connect.() edge case:" do
     invalid_session = Trailblazer::Pro::Session::Uninitialized.new(trailblazer_pro_host: trailblazer_pro_host, api_key: "incorrect api_key")
 
-    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Client::Connect, [{session: invalid_session}, {}])
+    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Client::Connect, {session: invalid_session})
 
     assert_equal signal.inspect, %(#<Trailblazer::Activity::End semantic=:failure>)
     assert_equal ctx[:error_message], %(Custom token couldn't be retrieved. HTTP status: 401)

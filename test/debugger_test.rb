@@ -75,13 +75,13 @@ class DebuggerAPITest < Minitest::Spec
     patched_push = Trailblazer::Activity::DSL::Linear::Patch.(Trailblazer::Pro::Debugger::Push, [:connect], patch)
 
     #@ Make {upload} return 501.
-    signal, (ctx, _) = Trailblazer::Developer.wtf?(patched_push, [
+    signal, (ctx, _) = Trailblazer::Developer.wtf?(patched_push,
       {
         session: Trailblazer::Pro::Session.session,
         http: stubbed_http,
         data_to_store: {fields: {a: 1}},
         firestore_fields_template: session_static_options[:firestore_fields_template],
-      }, {}])
+      })
 
     assert_equal signal.inspect, %(#<Trailblazer::Activity::End semantic=:failure>)
     assert_equal ctx[:error_message], %(Upload failed. HTTP status: 501) # we stubbed the request to be {501}
@@ -102,13 +102,13 @@ class DebuggerAPITest < Minitest::Spec
       end
     end
 
-    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Debugger::Push, [
+    signal, (ctx, _) = Trailblazer::Developer.wtf?(Trailblazer::Pro::Debugger::Push,
       {
         session: Trailblazer::Pro::Session.session,
         http: stubbed_http,
         data_to_store: {fields: {a: 1}},
         firestore_fields_template: session_static_options[:firestore_fields_template],
-      }, {}])
+      })
 
     assert_equal signal.inspect, %(#<Trailblazer::Activity::End semantic=:failure>)
     assert_equal ctx[:error_message], %(Custom token couldn't be retrieved. HTTP status: 502)
@@ -129,10 +129,12 @@ class DebuggerAPITest < Minitest::Spec
     # Compute a {Debugger::Trace} using the normal {Wtf} and {Trace::Present} logic.
     signal, (ctx, flow_options), circuit_options, output, returned_args = Trailblazer::Developer.wtf?(
       Create,
-      [{}, {}],
-      present_options: {
-        render_method: ->(debugger_trace:, **) { ["i am the output", debugger_trace] }, # whatever we return from {:render_method} is available as {returned_args}
-      },
+      {},
+      circuit_options: {
+        present_options: {
+          render_method: ->(debugger_trace:, **) { ["i am the output", debugger_trace] }, # whatever we return from {:render_method} is available as {returned_args}
+        },
+      }
     )
 
     debugger_trace = returned_args

@@ -3,6 +3,8 @@ require "trailblazer/pro"
 
 require "minitest/autorun"
 
+require "trailblazer/invoke/activity" # DISCUSS: adding {Railway.__} here.
+
 Minitest::Spec.class_eval do
   def assert_equal(asserted, expected)
     super(expected, asserted)

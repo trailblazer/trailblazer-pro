@@ -29,17 +29,6 @@ module Trailblazer::Pro
         # We inject our PRO Debugger.call via {:render_method} here.
         # {Developer::Wtf.invoke} calls {puts}.
 
-
-=begin
-def wtf_adds(*)
-      {
-        invoke_method: Trailblazer::Developer::Wtf.method(:invoke_with_rescue),
-      }
-    end
-=end
-
-
-
         returned = Trailblazer::Developer::Wtf.invoke_with_rescue(
           *args,
           present_options: present_options,

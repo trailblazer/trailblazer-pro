@@ -1,5 +1,6 @@
 require "test_helper"
 
+# DISCUSS: is this not rather a "developer.wtf? with our {:present_options}" test?
 class PresentOptionsTest < Minitest::Spec
   class Create < Trailblazer::Activity::Railway
     step :model
@@ -16,8 +17,8 @@ class PresentOptionsTest < Minitest::Spec
 
     signal, (ctx, _), _, output, returned_ctx = Trailblazer::Developer.wtf?(
       Create,
-      [ctx, {}],
-      present_options: {render_method: Trailblazer::Pro.method(:invoke_debugger), session: uninitialized_session, render_wtf: true}, # FIXME:  why do we have to pass {:session} here?
+      ctx,
+      circuit_options: {present_options: {render_method: Trailblazer::Pro.method(:invoke_debugger), session: uninitialized_session, render_wtf: true}}, # FIXME:  why do we have to pass {:session} here?
     )
 
     assert_equal output, %(PresentOptionsTest::Create
@@ -32,8 +33,8 @@ class PresentOptionsTest < Minitest::Spec
 
     signal, (ctx, _), _, output, returned_ctx = Trailblazer::Developer.wtf?(
       Create,
-      [ctx, {}],
-      present_options: {render_method: Trailblazer::Pro.method(:invoke_debugger), session: uninitialized_session, render_wtf: false}, # FIXME:  why do we have to pass {:session} here?
+      ctx,
+      circuit_options: {present_options: {render_method: Trailblazer::Pro.method(:invoke_debugger), session: uninitialized_session, render_wtf: false}}, # FIXME:  why do we have to pass {:session} here?
     )
 
     assert_equal output, %(\e[1m[TRB PRO] view trace (PresentOptionsTest::Create) at \e[22mhttps://ide.trailblazer.to/#{returned_ctx[:id]})
@@ -45,8 +46,8 @@ class PresentOptionsTest < Minitest::Spec
 
     signal, (ctx, _), _, output, returned_ctx = Trailblazer::Developer.wtf?(
       Create,
-      [ctx, {}],
-      present_options: {render_method: Trailblazer::Pro.method(:invoke_debugger), session: uninitialized_session},
+      ctx,
+      circuit_options: {present_options: {render_method: Trailblazer::Pro.method(:invoke_debugger), session: uninitialized_session}},
     )
 
     assert_equal returned_ctx[:id].size, 20

@@ -20,6 +20,18 @@ class WtfTest < Minitest::Spec
     }
   end
 
+  before do
+    Trailblazer::Pro::Session.trace_guards = Trailblazer::Pro::Trace::Decision.new([
+      ->(operation, options) do
+        true
+      end
+    ])
+  end
+
+  after do
+    Trailblazer::Pro::Session.trace_guards = Trailblazer::Pro::Trace::Decision.new([]) # here we say "don't trace anything!"
+  end
+
   it "{#wtf?} with global session options" do
     Trailblazer::Pro.initialize!(
       api_key:              api_key,
@@ -28,7 +40,8 @@ class WtfTest < Minitest::Spec
   # Uninitialized session.
     assert_equal Trailblazer::Pro::Session.session.to_h, {api_key: api_key, trailblazer_pro_host: trailblazer_pro_host}
 
-    signal, (ctx, _), _, output, returned_ctx = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
+# FIXME: don't use Operation
+    signal, (ctx, _), _, output, returned_ctx = Trailblazer::Operation.__(Create, {}) #Trailblazer::Pro::Trace::Wtf.invoke(Create, {}, **Trailblazer::Pro::Trace::Wtf.options_for_canonical_invoke)
 
     trace_id = returned_ctx[:id]
     session = returned_ctx[:session]
@@ -41,7 +54,7 @@ class WtfTest < Minitest::Spec
     session_1_hash = assert_session({session: session}, **session_static_options)
 
   #@ while session is valid, do another call.
-    signal, (ctx, _), _, output, returned_ctx_2 = Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}])
+    signal, (ctx, _), _, output, returned_ctx_2 = Trailblazer::Operation.__(Create, ctx)
 
     trace_id_2 = returned_ctx_2[:id]
     session_2 = returned_ctx_2[:session]
@@ -58,7 +71,7 @@ class WtfTest < Minitest::Spec
 
   #@ simulate time out, new token required.
     signal, (ctx, _), _, output, returned_ctx_3 =
-      Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}], present_options: {now: DateTime.now + (60 * 1000)})
+      Trailblazer::Operation.__(Create, ctx, circuit_options: {present_options: {now: DateTime.now + (60 * 1000)}})
 
     trace_id_3 = returned_ctx_3[:id]
     session_3 = returned_ctx_3[:session]
@@ -84,7 +97,7 @@ class WtfTest < Minitest::Spec
 
     Trailblazer::Pro.initialize!(**session_4)
 
-    signal, (ctx, _), _, output, returned_ctx_5 = Trailblazer::Pro::Trace::Wtf.call(Create, [ctx, {}])
+    signal, (ctx, _), _, output, returned_ctx_5 = Trailblazer::Operation.__(Create, ctx)
 
     trace_id_5 = returned_ctx_5[:id]
     session_5 = returned_ctx_5[:session]
@@ -106,7 +119,7 @@ class WtfTest < Minitest::Spec
       render_wtf: false,
     )
 
-    signal, (ctx, _), _, output, returned_ctx = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
+    signal, (ctx, _), _, output, returned_ctx = Trailblazer::Operation.__(Create, {})
 
     trace_id = returned_ctx[:id]
     session = returned_ctx[:session]
@@ -124,7 +137,7 @@ class WtfTest < Minitest::Spec
       render_wtf: true,
     )
 
-    signal, (ctx, _), _, output, returned_ctx = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
+    signal, (ctx, _), _, output, returned_ctx = Trailblazer::Operation.__(Create, {})
 
     trace_id = returned_ctx[:id]
     session = returned_ctx[:session]
@@ -147,7 +160,7 @@ class WtfTest < Minitest::Spec
       # render_wtf: false,
     )
 
-    signal, (ctx, _), _, output, _returned_ctx = Trailblazer::Pro::Trace::Wtf.call(Create, [{}, {}])
+    signal, (ctx, _), _, output, _returned_ctx = Trailblazer::Operation.__(Create, {})
 
     assert_equal output, %(WtfTest::Create
 |-- \e[32mStart.default\e[0m

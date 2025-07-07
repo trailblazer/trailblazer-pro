@@ -20,7 +20,6 @@ require_relative "pro/trace/store"
 require_relative "pro/trace/wtf"
 require_relative "pro/debugger/push"
 require_relative "pro/debugger"
-require_relative "pro/call/activity"
 require_relative "pro/operation/WTF"
 
 
